@@ -1,0 +1,4 @@
+**/__pycache__/
+**/*.pyc
+**/logs
+waymo_data/
