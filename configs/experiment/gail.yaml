@@ -6,6 +6,7 @@ defaults:
 
 model:
   model_config:
+    automatic_optimization: false
     lr: 5e-5
     lr_min_ratio: 0.05
     token_processor:
@@ -15,6 +16,10 @@ model:
       agent_token_sampling: # closed-loop
         num_k: 1 # for k nearest neighbors
         temp: 1.0
+    training_rollout_sampling:
+      criterium: topk_prob # {topk_dist_sampled_with_prob, topk_prob, topk_prob_sampled_with_dist}
+      num_k: 2048 # for k nearest neighbors, set to -1 to turn-off closed-loop training
+      temp: 1.0
 
 #ckpt_path: /home/ke/code/catk/src/logs/debug_open_source/runs/2025-02-20_15-59-44/checkpoints/epoch_000.ckpt
 ckpt_path: null

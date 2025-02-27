@@ -165,17 +165,6 @@ class SMART_GAIL(LightningModule):
         self.expert_buffer = deque(maxlen=1000)
 
     def push_expert_sample(self,tokenized_map, tokenized_agent,step_current_2hz=2):
-
-        # del tokenized_agent['token_traj_all']
-        # del tokenized_agent['token_traj']
-        # del tokenized_agent['gt_pos_raw']
-        # del tokenized_agent['gt_head_raw']
-        # del tokenized_agent['gt_valid_raw']
-        #
-        # del tokenized_agent['gt_idx']
-        # del tokenized_agent['gt_pos']
-        # del tokenized_agent['gt_heading']
-
         for step in range(self.num_steps):
             tokenized_agent_current = {}
 
@@ -332,7 +321,12 @@ class SMART_GAIL(LightningModule):
             )
             self.log("train/loss", loss, on_step=True, batch_size=1)
 
-            return loss
+            # Get optimizers
+            policy_optimizer, discriminator_optimizer = self.optimizers()
+
+            policy_optimizer.zero_grad()
+            self.manual_backward(loss)
+            policy_optimizer.step()
         else:
             with torch.no_grad():
                 self.rollout(tokenized_map, tokenized_agent)
@@ -475,7 +469,6 @@ class SMART_GAIL(LightningModule):
             if self.global_rank == 0:
                 if self.wosac_submission.is_active:
                     self.wosac_submission.save_sub_file()
-
 
     def configure_optimizers(self):
         policy_optimizer = optim.Adam(list(self.encoder.parameters()) + list(self.value_network.parameters()), lr=self.lr)
