@@ -17,6 +17,6 @@ source "/home/users/ntu/lyuchen/miniconda3/bin/activate"
 conda activate catk
 cd /home/users/ntu/lyuchen/scratch/keguo_projects/ntu/sim
 
-torchrun -m src.run > catk.log  2>&1
+torchrun -m src.run > pre_bc.log  2>&1
 
 
