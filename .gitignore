@@ -1,5 +1,23 @@
+
+# python
+*.pyc
 **/__pycache__/
-**/*.pyc
+.pytest_cache/*
+.pydevproject
+
+# IDE
+.vscode/*
+.idea/*
+
+# Pip
+*.egg-info
+
+# files
+*.log
+#*.pkl
+*.jpg
+*.pcd
+*.png
+
 **/logs
 **/waymo_data
-./.idea
