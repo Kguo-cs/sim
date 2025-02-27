@@ -1,17 +1,23 @@
 # https://wandb.ai
+#
+#wandb:
+#  _target_: lightning.pytorch.loggers.wandb.WandbLogger
+#  name: ${task_name}
+#  save_dir: "${paths.output_dir}"
+#  offline: False
+#  id: null # pass correct id to resume experiment!
+#  anonymous: null # enable anonymous logging
+#  project: sim_agent
+#  log_model: False # upload lightning ckpts
+#  prefix: "" # a string to put at the beginning of metric keys
+#  entity: u3006612
+#  group: ""
+#  tags: []
+#  job_type: ""
+#  resume: allow
 
-wandb:
-  _target_: lightning.pytorch.loggers.wandb.WandbLogger
-  name: ${task_name}
-  save_dir: "${paths.output_dir}"
-  offline: False
-  id: null # pass correct id to resume experiment!
-  anonymous: null # enable anonymous logging
-  project: sim_agent
-  log_model: False # upload lightning ckpts
-  prefix: "" # a string to put at the beginning of metric keys
-  entity: u3006612
-  group: ""
-  tags: []
-  job_type: ""
-  resume: allow
+tensorboard:
+  _target_: lightning.pytorch.loggers.tensorboard.TensorBoardLogger
+  save_dir: ./logs  # Set your desired logging directory
+  name: my_experiment # Experiment name
+  version: null  # Auto-increments the version

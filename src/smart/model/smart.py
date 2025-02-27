@@ -184,21 +184,21 @@ class SMART(LightningModule):
                     self.wosac_metrics.update(data["tfrecord_path"], scenario_rollouts)
 
             # ! visualization
-            if self.global_rank == 0 and batch_idx < self.n_vis_batch:
-                if scenario_rollouts is not None:
-                    for _i_sc in range(self.n_vis_scenario):
-                        _vis = VisWaymo(
-                            scenario_path=data["tfrecord_path"][_i_sc],
-                            save_dir=self.video_dir
-                            / f"batch_{batch_idx:02d}-scenario_{_i_sc:02d}",
-                        )
-                        _vis.save_video_scenario_rollout(
-                            scenario_rollouts[_i_sc], self.n_vis_rollout
-                        )
-                        for _path in _vis.video_paths:
-                            self.logger.log_video(
-                                "/".join(_path.split("/")[-3:]), [_path]
-                            )
+            # if self.global_rank == 0 and batch_idx < self.n_vis_batch:
+            #     if scenario_rollouts is not None:
+            #         for _i_sc in range(self.n_vis_scenario):
+            #             _vis = VisWaymo(
+            #                 scenario_path=data["tfrecord_path"][_i_sc],
+            #                 save_dir=self.video_dir
+            #                 / f"batch_{batch_idx:02d}-scenario_{_i_sc:02d}",
+            #             )
+            #             _vis.save_video_scenario_rollout(
+            #                 scenario_rollouts[_i_sc], self.n_vis_rollout
+            #             )
+            #             for _path in _vis.video_paths:
+            #                 self.logger.log_video(
+            #                     "/".join(_path.split("/")[-3:]), [_path]
+            #                 )
 
     def on_validation_epoch_end(self):
         if self.val_closed_loop:

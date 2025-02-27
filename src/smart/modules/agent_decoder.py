@@ -10,7 +10,7 @@
 # disclosure or distribution of this material and related documentation
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
-
+import copy
 from typing import Dict, Optional
 
 import torch
@@ -433,27 +433,35 @@ class SMARTAgentDecoder(nn.Module):
         # ! final mlp to get outputs
         next_token_logits = self.token_predict_head(feat_a)
 
-        return {
-            # action that goes from [(10->15), ..., (85->90)]
-            "next_token_logits": next_token_logits[:, 1:-1],  # [n_agent, 16, n_token]
-            "next_token_valid": tokenized_agent["valid_mask"][:, 1:-1],  # [n_agent, 16]
-            # for step {5, 10, ..., 90} and act [(0->5), (5->10), ..., (85->90)]
-            "pred_pos": tokenized_agent["sampled_pos"],  # [n_agent, 18, 2]
-            "pred_head": tokenized_agent["sampled_heading"],  # [n_agent, 18]
-            "pred_valid": tokenized_agent["valid_mask"],  # [n_agent, 18]
-            # for step {5, 10, ..., 90}
-            "gt_pos_raw": tokenized_agent["gt_pos_raw"],  # [n_agent, 18, 2]
-            "gt_head_raw": tokenized_agent["gt_head_raw"],  # [n_agent, 18]
-            "gt_valid_raw": tokenized_agent["gt_valid_raw"],  # [n_agent, 18]
-            # or use the tokenized gt
-            "gt_pos": tokenized_agent["gt_pos"],  # [n_agent, 18, 2]
-            "gt_head": tokenized_agent["gt_heading"],  # [n_agent, 18]
-            "gt_valid": tokenized_agent["valid_mask"],  # [n_agent, 18]
-        }
+        if "gt_pos_raw" in tokenized_agent.keys():
+            return {
+                # action that goes from [(10->15), ..., (85->90)]
+                "next_token_logits": next_token_logits[:, 1:-1],  # [n_agent, 16, n_token]
+                "next_token_valid": tokenized_agent["valid_mask"][:, 1:-1],  # [n_agent, 16]
+                # for step {5, 10, ..., 90} and act [(0->5), (5->10), ..., (85->90)]
+                "pred_pos": tokenized_agent["sampled_pos"],  # [n_agent, 18, 2]
+                "pred_head": tokenized_agent["sampled_heading"],  # [n_agent, 18]
+                "pred_valid": tokenized_agent["valid_mask"],  # [n_agent, 18]
+                # for step {5, 10, ..., 90}
+                "gt_pos_raw": tokenized_agent["gt_pos_raw"],  # [n_agent, 18, 2]
+                "gt_head_raw": tokenized_agent["gt_head_raw"],  # [n_agent, 18]
+                "gt_valid_raw": tokenized_agent["gt_valid_raw"],  # [n_agent, 18]
+                # or use the tokenized gt
+                "gt_pos": tokenized_agent["gt_pos"],  # [n_agent, 18, 2]
+                "gt_head": tokenized_agent["gt_heading"],  # [n_agent, 18]
+                "gt_valid": tokenized_agent["valid_mask"],  # [n_agent, 18]
+            }
+        else:
+            return {
+                "cur_pred": next_token_logits[:,-1],
+                "feat_a": feat_a[:,-1],
+                }
+
 
     def inference(
         self,
         tokenized_agent: Dict[str, torch.Tensor],
+        tokenized_map:Dict[str, torch.Tensor],
         map_feature: Dict[str, torch.Tensor],
         sampling_scheme: DictConfig,
     ) -> Dict[str, torch.Tensor]:
@@ -467,6 +475,7 @@ class SMARTAgentDecoder(nn.Module):
         head_a = tokenized_agent["gt_heading"][:, :step_current_2hz].clone()
         head_vector_a = torch.stack([head_a.cos(), head_a.sin()], dim=-1)
         pred_idx = tokenized_agent["gt_idx"].clone()
+
         (
             feat_a,  # [n_agent, step_current_2hz, hidden_dim]
             agent_token_emb,  # [n_agent, step_current_2hz, hidden_dim]
@@ -488,6 +497,10 @@ class SMARTAgentDecoder(nn.Module):
             agent_shape=tokenized_agent["shape"],
             inference=True,
         )
+
+        agent_token_index = tokenized_agent["gt_idx"][:, :step_current_2hz]
+        state=None
+        sample_list=[]
 
         if not self.training:
             pred_traj_10hz = torch.zeros(
@@ -600,7 +613,7 @@ class SMARTAgentDecoder(nn.Module):
                         (_feat_temporal.flatten(0, 1), _feat_temporal[:, -1]),
                         r_t,
                         edge_index_t,
-                    )
+                    )#3 s history
                     # * give same results as below, but more efficient
                     # feat_a_now = self.t_attn_layers[i](
                     #     _feat_temporal.flatten(0, 1), r_t, edge_index_t
@@ -637,6 +650,37 @@ class SMARTAgentDecoder(nn.Module):
                 valid_next_gt=tokenized_agent["gt_valid_raw"][:, n_step],  # [n_agent]
                 token_agent_shape=tokenized_agent["token_agent_shape"],  # [n_token, 2]
             )  # next_token_idx: [n_agent], next_token_traj_all: [n_agent, 6, 4, 2]
+
+            tokenized_agent_current = {}
+
+            tokenized_agent_current['sampled_pos'] = pos_a[:, -step_current_2hz:]
+            tokenized_agent_current['sampled_heading'] = head_a[:, -step_current_2hz:]
+            tokenized_agent_current['sampled_idx'] = agent_token_index[:, -step_current_2hz:]
+            tokenized_agent_current['valid_mask'] = pred_valid[:, n_step-step_current_2hz:n_step]
+            tokenized_agent_current['trajectory_token_veh']=tokenized_agent['trajectory_token_veh']
+            tokenized_agent_current['trajectory_token_ped']=tokenized_agent['trajectory_token_ped']
+            tokenized_agent_current['trajectory_token_cyc']=tokenized_agent['trajectory_token_cyc']
+            tokenized_agent_current['type']=tokenized_agent['type']
+            tokenized_agent_current['shape']=tokenized_agent['shape']
+            tokenized_agent_current['batch']=tokenized_agent['batch']
+            tokenized_agent_current['num_graphs']=tokenized_agent['num_graphs']
+
+            state = (tokenized_map,tokenized_agent_current)
+
+            action = next_token_idx
+            agent_token_index = torch.cat([agent_token_index, next_token_idx[:, None]], dim=-1)
+
+            # self.forward(tokenized_agent_current, map_feature)
+
+            prev_log_prob=torch.distributions.Categorical(logits=next_token_logits).log_prob(action)
+            sample={
+                "state": state,
+                "action": action,
+                "prev_log_prob": prev_log_prob,
+                "feat_a_now": feat_a_now,
+            }
+
+            sample_list.append(sample)
 
             diff_xy = next_token_traj_all[:, -1, 0] - next_token_traj_all[:, -1, 3]
             next_token_action_list.append(
@@ -716,6 +760,22 @@ class SMARTAgentDecoder(nn.Module):
             feat_a_next = self.fusion_emb(feat_a_next)
             feat_a = torch.cat([feat_a, feat_a_next], dim=1)
 
+
+            # fat1 = self.agent_token_embedding(
+            #     agent_token_index=agent_token_index,
+            #     trajectory_token_veh=tokenized_agent["trajectory_token_veh"],
+            #     trajectory_token_ped=tokenized_agent["trajectory_token_ped"],
+            #     trajectory_token_cyc=tokenized_agent["trajectory_token_cyc"],
+            #     pos_a=pos_a,
+            #     head_vector_a=head_vector_a,
+            #     agent_type=tokenized_agent["type"],
+            #     agent_shape=tokenized_agent["shape"],
+            #     inference=False,
+            # )
+            #
+            # print(torch.where(fat1!= feat_a))
+            # print((fat1-feat_a)[fat1!= feat_a])
+
         out_dict = {
             # action that goes from [(10->15), ..., (85->90)]
             "next_token_logits": torch.stack(next_token_logits_list, dim=1),
@@ -735,6 +795,7 @@ class SMARTAgentDecoder(nn.Module):
             "gt_valid": tokenized_agent["valid_mask"],  # [n_agent, 18]
             # for shifting proxy targets by lr
             "next_token_action": torch.stack(next_token_action_list, dim=1),
+            "sample_list":sample_list
         }
 
         if not self.training:  # 10hz predictions for wosac evaluation and submission
