@@ -19,5 +19,5 @@
 tensorboard:
   _target_: lightning.pytorch.loggers.tensorboard.TensorBoardLogger
   save_dir: ./logs  # Set your desired logging directory
-  name: my_experiment # Experiment name
-  version: null  # Auto-increments the version
+  name: ${task_name} # Experiment name
+  version: ${paths.output_dir}  # Auto-increments the version

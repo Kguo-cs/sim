@@ -95,7 +95,7 @@ def main(cfg: DictConfig) -> None:
     torch.set_printoptions(precision=3)
 
     log.info("Printing config tree with Rich! <cfg.extras.print_config=True>")
-    print_config_tree(cfg, resolve=True, save_to_file=True)
+    #print_config_tree(cfg, resolve=True, save_to_file=True)
 
     run(cfg)  # train/val/test the model
 

@@ -7,7 +7,7 @@ model_config:
   n_rollout_closed_val: 32
   n_batch_wosac_metric: 10
   n_vis_batch: 2
-  n_vis_scenario: 5
+  n_vis_scenario: 1
   n_vis_rollout: 5
   val_open_loop: true
   val_closed_loop: true
