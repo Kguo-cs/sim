@@ -458,10 +458,12 @@ class SMART_GAIL(LightningModule):
                 epoch_wosac_metrics = self.wosac_metrics.compute()
                 epoch_wosac_metrics["val_closed/ADE"] = self.minADE.compute()
                 if self.global_rank == 0:
-                    epoch_wosac_metrics["epoch"] = (
-                        self.log_epoch if self.log_epoch >= 0 else self.current_epoch
-                    )
-                    self.logger.log_metrics(epoch_wosac_metrics)
+                    # epoch_wosac_metrics["epoch"] = (
+                    #     self.log_epoch if self.log_epoch >= 0 else self.current_epoch
+                    # )
+                    #self.logger.log_metrics(epoch_wosac_metrics)
+                    for key, value in epoch_wosac_metrics.items():
+                        self.log(key, value, on_step=False, on_epoch=True, prog_bar=True,sync_dist=True)
 
                 self.wosac_metrics.reset()
                 self.minADE.reset()

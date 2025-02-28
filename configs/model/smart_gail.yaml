@@ -4,6 +4,10 @@ defaults:
   - smart
 
 model_config:
+  n_batch_wosac_metric: 1
+  n_vis_batch: 1
+  n_vis_scenario: 1
+  n_vis_rollout: 1
   decoder:
     hidden_dim: 64
     num_heads: 4
