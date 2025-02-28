@@ -29,6 +29,7 @@ from src.smart.utils import (
     weight_init,
     wrap_angle,
 )
+from torch.distributions import Categorical, Independent, MixtureSameFamily, Normal
 
 
 class EgoGMMAgentDecoder(nn.Module):
@@ -503,6 +504,8 @@ class EgoGMMAgentDecoder(nn.Module):
             agent_shape=tokenized_agent["shape"],
             inference=True,
         )
+        agent_token_index = tokenized_agent["gt_idx"][:, :step_current_2hz]
+        sample_list=[]
 
         if not self.training:
             pred_traj_10hz = torch.zeros(
@@ -517,6 +520,9 @@ class EgoGMMAgentDecoder(nn.Module):
         ego_next_poses_list = []
         next_token_action_list = []
         feat_a_t_dict = {}
+
+        sample_list=[]
+
         for t in range(n_step_future_2hz):  # 0 -> 15
             t_now = step_current_2hz - 1 + t  # 1 -> 16
             n_step = t_now + 1  # 2 -> 17
@@ -645,7 +651,7 @@ class EgoGMMAgentDecoder(nn.Module):
             ego_next_logits_list.append(ego_next_logits)  # [n_batch, n_k_ego_gmm]
             ego_next_poses_list.append(ego_next_poses)  # [n_batch, n_k_ego_gmm, 3]
 
-            next_token_idx, next_token_traj_all = sample_next_gmm_traj(
+            next_token_idx, next_token_traj_all,ego_sample,prev_log_prob = sample_next_gmm_traj(
                 token_traj=tokenized_agent["token_traj"],
                 token_traj_all=tokenized_agent["token_traj_all"],
                 sampling_scheme=sampling_scheme,
@@ -663,6 +669,33 @@ class EgoGMMAgentDecoder(nn.Module):
                 token_agent_shape=tokenized_agent["token_agent_shape"],  # [n_token, 2]
                 next_token_idx=tokenized_agent["gt_idx"][:, n_step].clone(),
             )  # next_token_idx: [n_agent], next_token_traj_all: [n_agent, 6, 4, 2]
+
+            tokenized_agent_current = {}
+
+            tokenized_agent_current['sampled_pos'] = pos_a[:, -step_current_2hz:]
+            tokenized_agent_current['sampled_heading'] = head_a[:, -step_current_2hz:]
+            tokenized_agent_current['sampled_idx'] = agent_token_index[:, -step_current_2hz:]
+            tokenized_agent_current['valid_mask'] = pred_valid[:, n_step-step_current_2hz:n_step]
+            tokenized_agent_current['trajectory_token_veh']=tokenized_agent['trajectory_token_veh']
+            tokenized_agent_current['trajectory_token_ped']=tokenized_agent['trajectory_token_ped']
+            tokenized_agent_current['trajectory_token_cyc']=tokenized_agent['trajectory_token_cyc']
+            tokenized_agent_current['type']=tokenized_agent['type']
+            tokenized_agent_current['shape']=tokenized_agent['shape']
+            tokenized_agent_current['batch']=tokenized_agent['batch']
+            tokenized_agent_current['num_graphs']=tokenized_agent['num_graphs']
+
+            agent_token_index = torch.cat([agent_token_index, next_token_idx[:, None]], dim=-1)
+
+            self.forward(tokenized_agent_current, map_feature)
+            sample={
+                "state": tokenized_agent_current,
+                "action": ego_sample,
+                "prev_log_prob": prev_log_prob,
+                "feat_a_now": feat_a_now,
+            }
+
+            sample_list.append(sample)
+
 
             diff_xy = next_token_traj_all[:, -1, 0] - next_token_traj_all[:, -1, 3]
             next_token_action_list.append(
@@ -764,6 +797,7 @@ class EgoGMMAgentDecoder(nn.Module):
             "gt_valid": tokenized_agent["valid_mask"][ego_mask],  # [n_batch, 18]
             # for shifting proxy targets by lr, [n_batch, 16, 3]
             "next_token_action": torch.stack(next_token_action_list, dim=1),
+            "sample_list": sample_list
         }
 
         if not self.training:  # 10hz predictions for wosac evaluation and submission

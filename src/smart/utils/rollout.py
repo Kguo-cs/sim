@@ -202,7 +202,7 @@ def sample_next_gmm_traj(
     valid_next_gt: Tensor,  # [n_agent]
     token_agent_shape: Tensor,  # [n_agent, 2]
     next_token_idx: Tensor,  # [n_agent]
-) -> Tuple[Tensor, Tensor]:
+) -> Tuple[Tensor, Tensor,Tensor,Tensor]:
     """
     Returns:
         next_token_traj_all: [n_agent, 6, 4, 2], local coord
@@ -269,6 +269,8 @@ def sample_next_gmm_traj(
     )
     ego_sample = gmm.sample()  # [n_batch, 4]
 
+    prev_log_prob=gmm.log_prob(ego_sample)
+
     ego_contour_local = cal_polygon_contour(
         ego_sample[:, :2],  # [n_batch, 2]
         torch.arctan2(ego_sample[:, -1], ego_sample[:, -2]),  # [n_batch]
@@ -290,4 +292,4 @@ def sample_next_gmm_traj(
     # [n_batch, 6, 4, 2]
     next_token_traj_all[ego_mask] = torch.stack(ego_token_interp, dim=1)
 
-    return next_token_idx, next_token_traj_all
+    return next_token_idx, next_token_traj_all,ego_sample,prev_log_prob

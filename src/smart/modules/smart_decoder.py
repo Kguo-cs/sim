@@ -80,8 +80,12 @@ class SMARTDecoder(nn.Module):
 
 
     def compute_disc_val(self,state,action ):
-        tokenized_map,tokenized_agent=state
-        pred_dict=self.forward(tokenized_map,tokenized_agent)
+        if 'token_idx' in state[0].keys():
+            tokenized_map,tokenized_agent=state
+            map_feature = self.map_encoder(tokenized_map)
+        else:
+            map_feature,tokenized_agent=state
+        pred_dict = self.agent_encoder(tokenized_agent, map_feature)
         action_embed=self.action_encoder(action)
         state_embed=pred_dict["cur_pred"]
         state_action=torch.cat([state_embed,action_embed],dim=-1)
@@ -104,6 +108,6 @@ class SMARTDecoder(nn.Module):
     ) -> Dict[str, Tensor]:
         map_feature = self.map_encoder(tokenized_map)
         pred_dict = self.agent_encoder.inference(
-            tokenized_agent,tokenized_map, map_feature, sampling_scheme
+            tokenized_agent, map_feature, sampling_scheme
         )
         return pred_dict

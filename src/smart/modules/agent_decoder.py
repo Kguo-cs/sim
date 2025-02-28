@@ -461,7 +461,6 @@ class SMARTAgentDecoder(nn.Module):
     def inference(
         self,
         tokenized_agent: Dict[str, torch.Tensor],
-        tokenized_map:Dict[str, torch.Tensor],
         map_feature: Dict[str, torch.Tensor],
         sampling_scheme: DictConfig,
     ) -> Dict[str, torch.Tensor]:
@@ -499,7 +498,6 @@ class SMARTAgentDecoder(nn.Module):
         )
 
         agent_token_index = tokenized_agent["gt_idx"][:, :step_current_2hz]
-        state=None
         sample_list=[]
 
         if not self.training:
@@ -665,7 +663,7 @@ class SMARTAgentDecoder(nn.Module):
             tokenized_agent_current['batch']=tokenized_agent['batch']
             tokenized_agent_current['num_graphs']=tokenized_agent['num_graphs']
 
-            state = (tokenized_map,tokenized_agent_current)
+            state = tokenized_agent_current
 
             action = next_token_idx
             agent_token_index = torch.cat([agent_token_index, next_token_idx[:, None]], dim=-1)

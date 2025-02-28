@@ -204,8 +204,8 @@ class EgoGMMSMART(LightningModule):
                     _vis.save_video_scenario_rollout(
                         scenario_rollouts[_i_sc], self.n_vis_rollout
                     )
-                    for _path in _vis.video_paths:
-                        self.logger.log_video("/".join(_path.split("/")[-3:]), [_path])
+                    # for _path in _vis.video_paths:
+                    #     self.logger.log_video("/".join(_path.split("/")[-3:]), [_path])
 
     def on_validation_epoch_end(self):
         if self.val_closed_loop:

@@ -21,6 +21,7 @@ from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import DictConfig
+from src.smart.model.smart_gail import SMART_GAIL,EGO_GMM_GAIL
 
 from src.utils import (
     RankedLogger,
@@ -43,6 +44,8 @@ def run(cfg: DictConfig) -> None:
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
     log.info(f"Instantiating model <{cfg.model._target_}>")
+
+    #EGO_GMM_GAIL(cfg.model.model_config)
     model: LightningModule = hydra.utils.instantiate(cfg.model, _recursive_=False)
 
     log.info("Instantiating callbacks...")
