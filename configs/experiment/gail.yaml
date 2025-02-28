@@ -7,8 +7,8 @@ defaults:
 model:
   model_config:
     automatic_optimization: false
-    lr: 5e-5
-    lr_min_ratio: 0.05
+    lr: 5e-4
+    lr_min_ratio: 1e-2
     token_processor:
       map_token_sampling: # open-loop
         num_k: 1 # for k nearest neighbors

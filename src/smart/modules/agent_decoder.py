@@ -102,19 +102,19 @@ class SMARTAgentDecoder(nn.Module):
             input_dim=self.hidden_dim * 2, hidden_dim=self.hidden_dim
         )
 
-        self.t_attn_layers = nn.ModuleList(
-            [
-                AttentionLayer(
-                    hidden_dim=hidden_dim,
-                    num_heads=num_heads,
-                    head_dim=head_dim,
-                    dropout=dropout,
-                    bipartite=False,
-                    has_pos_emb=True,
-                )
-                for _ in range(num_layers)
-            ]
-        )
+        # self.t_attn_layers = nn.ModuleList(
+        #     [
+        #         AttentionLayer(
+        #             hidden_dim=hidden_dim,
+        #             num_heads=num_heads,
+        #             head_dim=head_dim,
+        #             dropout=dropout,
+        #             bipartite=False,
+        #             has_pos_emb=True,
+        #         )
+        #         for _ in range(num_layers)
+        #     ]
+        # )
         self.pt2a_attn_layers = nn.ModuleList(
             [
                 AttentionLayer(
@@ -372,12 +372,12 @@ class SMARTAgentDecoder(nn.Module):
         )  # feat_a: [n_agent, n_step, hidden_dim]
 
         # ! build temporal, interaction and map2agent edges
-        edge_index_t, r_t = self.build_temporal_edge(
-            pos_a=pos_a,  # [n_agent, n_step, 2]
-            head_a=head_a,  # [n_agent, n_step]
-            head_vector_a=head_vector_a,  # [n_agent, n_step, 2]
-            mask=mask,  # [n_agent, n_step]
-        )  # edge_index_t: [2, n_edge_t], r_t: [n_edge_t, hidden_dim]
+        # edge_index_t, r_t = self.build_temporal_edge(
+        #     pos_a=pos_a,  # [n_agent, n_step, 2]
+        #     head_a=head_a,  # [n_agent, n_step]
+        #     head_vector_a=head_vector_a,  # [n_agent, n_step, 2]
+        #     mask=mask,  # [n_agent, n_step]
+        # )  # edge_index_t: [2, n_edge_t], r_t: [n_edge_t, hidden_dim]
 
         batch_s = torch.cat(
             [
@@ -421,7 +421,7 @@ class SMARTAgentDecoder(nn.Module):
 
         for i in range(self.num_layers):
             feat_a = feat_a.flatten(0, 1)  # [n_agent*n_step, hidden_dim]
-            feat_a = self.t_attn_layers[i](feat_a, r_t, edge_index_t)
+            #feat_a = self.t_attn_layers[i](feat_a, r_t, edge_index_t)
             # [n_step*n_agent, hidden_dim]
             feat_a = feat_a.view(n_agent, n_step, -1).transpose(0, 1).flatten(0, 1)
             feat_a = self.pt2a_attn_layers[i](
@@ -533,12 +533,12 @@ class SMARTAgentDecoder(nn.Module):
                     dim=0,
                 )
                 inference_mask = pred_valid[:, :n_step]
-                edge_index_t, r_t = self.build_temporal_edge(
-                    pos_a=pos_a,
-                    head_a=head_a,
-                    head_vector_a=head_vector_a,
-                    mask=pred_valid[:, :n_step],
-                )
+                # edge_index_t, r_t = self.build_temporal_edge(
+                #     pos_a=pos_a,
+                #     head_a=head_a,
+                #     head_vector_a=head_vector_a,
+                #     mask=pred_valid[:, :n_step],
+                # )
             else:
                 hist_step = 1
                 batch_s = tokenized_agent["batch"]
@@ -579,9 +579,9 @@ class SMARTAgentDecoder(nn.Module):
                 _feat_temporal = feat_a if i == 0 else feat_a_t_dict[i]
 
                 if t == 0:  # init, process hist_step together
-                    _feat_temporal = self.t_attn_layers[i](
-                        _feat_temporal.flatten(0, 1), r_t, edge_index_t
-                    ).view(n_agent, n_step, -1)
+                    # _feat_temporal = self.t_attn_layers[i](
+                    #     _feat_temporal.flatten(0, 1), r_t, edge_index_t
+                    # ).view(n_agent, n_step, -1)
                     _feat_temporal = _feat_temporal.transpose(0, 1).flatten(0, 1)
 
                     # [hist_step*n_pl, hidden_dim]
@@ -607,11 +607,12 @@ class SMARTAgentDecoder(nn.Module):
                         feat_a_t_dict[i + 1] = _feat_temporal
 
                 else:  # process one step
-                    feat_a_now = self.t_attn_layers[i](
-                        (_feat_temporal.flatten(0, 1), _feat_temporal[:, -1]),
-                        r_t,
-                        edge_index_t,
-                    )#3 s history
+                    # feat_a_now = self.t_attn_layers[i](
+                    #     (_feat_temporal.flatten(0, 1), _feat_temporal[:, -1]),
+                    #     r_t,
+                    #     edge_index_t,
+                    # )#3 s history
+                    feat_a_now=_feat_temporal[:, -1]
                     # * give same results as below, but more efficient
                     # feat_a_now = self.t_attn_layers[i](
                     #     _feat_temporal.flatten(0, 1), r_t, edge_index_t
@@ -651,10 +652,12 @@ class SMARTAgentDecoder(nn.Module):
 
             tokenized_agent_current = {}
 
-            tokenized_agent_current['sampled_pos'] = pos_a[:, -step_current_2hz:]
-            tokenized_agent_current['sampled_heading'] = head_a[:, -step_current_2hz:]
-            tokenized_agent_current['sampled_idx'] = agent_token_index[:, -step_current_2hz:]
-            tokenized_agent_current['valid_mask'] = pred_valid[:, n_step-step_current_2hz:n_step]
+            hist_len=1
+
+            tokenized_agent_current['sampled_pos'] = pos_a[:, -hist_len:]
+            tokenized_agent_current['sampled_heading'] = head_a[:, -hist_len:]
+            tokenized_agent_current['sampled_idx'] = agent_token_index[:, -hist_len:]
+            tokenized_agent_current['valid_mask'] = pred_valid[:, n_step-hist_len:n_step]
             tokenized_agent_current['trajectory_token_veh']=tokenized_agent['trajectory_token_veh']
             tokenized_agent_current['trajectory_token_ped']=tokenized_agent['trajectory_token_ped']
             tokenized_agent_current['trajectory_token_cyc']=tokenized_agent['trajectory_token_cyc']

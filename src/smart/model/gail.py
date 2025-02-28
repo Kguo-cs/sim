@@ -42,13 +42,15 @@ class GAIL(LightningModule):
         self.expert_buffer = deque(maxlen=1000)
 
     def push_expert_sample(self,tokenized_map, tokenized_agent,step_current_2hz=2):
-        for step in range(self.num_steps):
+        hist_len=1
+
+        for step in range(1,self.num_steps+1):
             tokenized_agent_current = {}
 
-            tokenized_agent_current['sampled_pos'] = tokenized_agent["sampled_pos"][:,step:step+step_current_2hz]
-            tokenized_agent_current['sampled_heading'] = tokenized_agent['sampled_heading'][:, step:step+step_current_2hz]
-            tokenized_agent_current['sampled_idx'] = tokenized_agent["sampled_idx"][:, step:step+step_current_2hz]
-            tokenized_agent_current['valid_mask'] = tokenized_agent["valid_mask"][:, step:step+step_current_2hz]
+            tokenized_agent_current['sampled_pos'] = tokenized_agent["sampled_pos"][:,step:step+hist_len]
+            tokenized_agent_current['sampled_heading'] = tokenized_agent['sampled_heading'][:, step:step+hist_len]
+            tokenized_agent_current['sampled_idx'] = tokenized_agent["sampled_idx"][:, step:step+hist_len]
+            tokenized_agent_current['valid_mask'] = tokenized_agent["valid_mask"][:, step:step+hist_len]
             tokenized_agent_current['trajectory_token_veh'] = tokenized_agent['trajectory_token_veh']
             tokenized_agent_current['trajectory_token_ped'] = tokenized_agent['trajectory_token_ped']
             tokenized_agent_current['trajectory_token_cyc'] = tokenized_agent['trajectory_token_cyc']
@@ -57,7 +59,7 @@ class GAIL(LightningModule):
             tokenized_agent_current['batch'] = tokenized_agent['batch']
             tokenized_agent_current['num_graphs'] = tokenized_agent['num_graphs']
 
-            action = tokenized_agent["sampled_idx"][:, step+step_current_2hz]
+            action = tokenized_agent["sampled_idx"][:, step+hist_len]
 
             expert_sample = {
                 "state": (tokenized_map, tokenized_agent_current),
