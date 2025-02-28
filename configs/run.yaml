@@ -19,7 +19,7 @@ defaults:
 action: fit # fit, finetune, validate, test
 
 # task name, determines output directory path
-task_name: "debug_open_source"
+task_name: "gail64"
 
 # simply provide checkpoint path to resume training
 ckpt_path: null
