@@ -243,7 +243,10 @@ class SMART(LightningModule):
     @torch.no_grad()
     def _rollouts(self, tokenized_map, agent,data) -> dict[str, Any]:
         if getattr(self.encoder, "sep_map", False):
-            tokenized_map1= self.token_processor.tokenize_map1(data)
+            if "map_save1" in data.keys():
+                tokenized_map1= self.token_processor.tokenize_map1(data)
+            else:
+                tokenized_map1 = tokenized_map
             agent["initial_map_feature"] = self.encoder.init_map_encoder(
                 tokenized_map1, tokenized_agent=agent
             )

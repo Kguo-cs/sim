@@ -18,7 +18,7 @@ model:
 ckpt_path: "./waymo_data/xflow512_match_noiseposvhead1_posheadl1-epoch=59-step=57120-valmeta=0.6496.ckpt"
 #ckpt_path: "./waymo_data/AIRL32_interdis_mean_203_t3_nodiff_epoch=9-step=152190_0.79065.ckpt"
 
-task_name: xflow128  #_prePlr10 #_all6 #l1_all128l1lane #pt99 #_07505v4_scalegmm30  #_valid32 #_huber1_sqrt #posheadl1 #_meanflow #_head5 #_pos1_w5 #_pta #colmax50 #scene #_seq #_seqWeightsceneshift16a1noclip #shiftpower #_pow3 #map1000 #6080 #selector_feat_fix4
+task_name: xflow128_sep  #_prePlr10 #_all6 #l1_all128l1lane #pt99 #_07505v4_scalegmm30  #_valid32 #_huber1_sqrt #posheadl1 #_meanflow #_head5 #_pos1_w5 #_pta #colmax50 #scene #_seq #_seqWeightsceneshift16a1noclip #shiftpower #_pow3 #map1000 #6080 #selector_feat_fix4
 
 trainer:
   check_val_every_n_epoch: 2
