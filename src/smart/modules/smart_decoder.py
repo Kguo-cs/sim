@@ -200,7 +200,7 @@ class SMARTDecoder(nn.Module):
 
         self.init_map_encoder = self._make_map_encoder(
             hidden_dim=hidden_dim,
-            pl2pl_radius=pl2pl_radius,
+            pl2pl_radius=10,
             num_freq_bands=num_freq_bands,
             num_layers=1,
             num_heads=num_heads,
