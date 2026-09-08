@@ -409,19 +409,19 @@ class InterativeDecoder(nn.Module):
                 edge_index_t=edge_index_t,
             )
 
-        if self.discriminator:
-            feat_a1 = self.a2a_attn_layers1(
-                feat_a, r_a2a, edge_index_a2a
-            )
-
-            dis_action_pred=self.token_predict_head1(feat_a1)
-
-            dis_action_pred = self._select_outputs(
-                dis_action_pred,
-                inference_mask,
-                self.dis_start_step,
-                n_current,
-            )
+        # if self.discriminator:
+        #     feat_a1 = self.a2a_attn_layers1(
+        #         feat_a, r_a2a, edge_index_a2a
+        #     )
+        #
+        #     dis_action_pred=self.token_predict_head1(feat_a1)
+        #
+        #     dis_action_pred = self._select_outputs(
+        #         dis_action_pred,
+        #         inference_mask,
+        #         self.dis_start_step,
+        #         n_current,
+        #     )
 
         if self.discriminator:
             feat_a = self._select_outputs(
@@ -467,7 +467,7 @@ class InterativeDecoder(nn.Module):
         logits = (scene_logit, interaction_logits[:, 0], None)
         rewards = (
             total_reward,
-            dis_action_pred,
+            None,
             scene_reward,
             interaction_reward_all,
         )
