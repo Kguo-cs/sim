@@ -39,7 +39,7 @@ Allocentric flocking
 4。 Higher-order collective interaction：绝大多数 swarm：是假设 pairwise interaction。但真实 collective intelligence 很可能包含：甚至更高阶结构。
 
 
-5. Physical interaction / aerodynamic collective intelligence
+5. 考虑physical interaction
 Flow interactions lead to self-organized flight formations disrupted by self-amplifying waves
 
 用 flapping-wing robotic experiments 证明，个体间的 aerodynamic wake 本身就能产生自组织排列，同时也会形成放大的 disturbance waves。
