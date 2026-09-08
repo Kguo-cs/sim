@@ -99,7 +99,7 @@ def _component_loss(
         # )
         loss=F.l1_loss(prediction, target, reduction="none")
     else:
-        loss = F.l1_loss(prediction, target, reduction="none")#.square()
+        loss = F.mse_loss(prediction, target, reduction="none")#.square()
     return loss.mean(-1)
 
 
@@ -155,12 +155,12 @@ def matching_loss(
 
     if mode == "deterministic":
         fake_pos, fake_heading, fake_shape, fake_vel = _split_state(prediction)
-        pos_loss = _component_loss(fake_pos, real_pos, False, huber_beta)
+        pos_loss = _component_loss(fake_pos, real_pos, True, huber_beta)
         heading_loss = _component_loss(
-            fake_heading, real_heading, False, huber_beta
+            fake_heading, real_heading, True, huber_beta
         )
-        shape_loss = _component_loss(fake_shape, real_shape, False, huber_beta)
-        vel_loss = _component_loss(fake_vel, real_vel, False, huber_beta)
+        shape_loss = _component_loss(fake_shape, real_shape, True, huber_beta)
+        vel_loss = _component_loss(fake_vel, real_vel, True, huber_beta)
 
     elif mode == "gaussian":
         fake_pos, fake_heading, fake_shape, fake_vel = _split_state(prediction)
@@ -199,7 +199,7 @@ def matching_loss(
         + w_vel * vel_loss
     )
     #total_loss = F.mse_loss(real_state,fake_state, reduction="none").mean(-1)*w_pos
-    total_loss=w_pos*F.l1_loss(real_state,fake_state,reduction='none').mean(-1)
+    #total_loss=w_pos*F.l1_loss(real_state,fake_state,reduction='none').mean(-1)
     return total_loss, pos_loss, heading_loss, shape_loss, vel_loss
 
 
@@ -381,12 +381,12 @@ def get_closest_sum_idx_fast(
 
         real_group = real[idx]
         fake_group = fake[idx]
-        cost=np.abs(real_group - fake_group).sum(axis=1, keepdims=True)
-        # cost = (
-        #     np.sum(real_group**2, axis=1, keepdims=True)
-        #     + np.sum(fake_group**2, axis=1, keepdims=True).T
-        #     - 2.0 * real_group @ fake_group.T
-        # )
+       # cost=np.abs(real_group - fake_group).sum(axis=1, keepdims=True)
+        cost = (
+            np.sum(real_group**2, axis=1, keepdims=True)
+            + np.sum(fake_group**2, axis=1, keepdims=True).T
+            - 2.0 * real_group @ fake_group.T
+        )
         np.maximum(cost, 0, out=cost)
         row, col = linear_sum_assignment(cost)
         matched[idx[row]] = idx[col]
@@ -473,22 +473,22 @@ def get_diff_loss(
         )
         collision_loss = (edge_loss * weight[start_idx]).mean()
 
-    #w_pos=w_heading=w_shape=w_vel=1
-    # w_heading=1#0.05
-    # w_shape=1#0.05
-    # w_vel=1
-
-
-    w_pos=w_heading=w_shape=w_vel=1#0.1
-    # w_pos=5
-    # w_heading=0.05
-    # w_shape=0.01
-    # w_vel=1
-
-
-
-    real_state=real_state/scale
-    fake_state=fake_state/scale
+    # #w_pos=w_heading=w_shape=w_vel=1
+    # # w_heading=1#0.05
+    # # w_shape=1#0.05
+    # # w_vel=1
+    #
+    #
+    # w_pos=w_heading=w_shape=w_vel=1#0.1
+    # # w_pos=5
+    # # w_heading=0.05
+    # # w_shape=0.01
+    # # w_vel=1
+    #
+    #
+    #
+    # real_state=real_state/scale
+    # fake_state=fake_state/scale
 
     losses = matching_loss(
         real_state,
