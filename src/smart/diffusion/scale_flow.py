@@ -192,12 +192,12 @@ class ScaleFlow(nn.Module):
         x: Tensor,
         tokenized_agent: HeteroData,
     ) -> Tensor:
-        x = self.model.normalize(x)
+        #x = self.model.normalize(x)
         noise = torch.randn_like(x)
-        # noise=self.model.denormalize(
-        #     noise
-        # )
-        #
+        noise=self.model.denormalize(
+            noise
+        )
+
         ego_mask = tokenized_agent[
             "ego_mask"
         ].bool()
@@ -210,11 +210,12 @@ class ScaleFlow(nn.Module):
             all_state=True,
         )
 
-        # return noise[matched_index]
+        return noise[matched_index]
 
-        return self.model.denormalize(
-            noise[matched_index]
-        )
+        # return self.model.denormalize(
+        #     noise[matched_index]
+        # )
+        #
 
     def _sample_time(
         self,
