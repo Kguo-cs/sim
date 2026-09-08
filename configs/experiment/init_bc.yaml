@@ -21,12 +21,12 @@ ckpt_path: "./waymo_data/xflow512_match_noiseposvhead1_posheadl1-epoch=59-step=5
 task_name: xflow128_sepload_all #_sep  #_prePlr10 #_all6 #l1_all128l1lane #pt99 #_07505v4_scalegmm30  #_valid32 #_huber1_sqrt #posheadl1 #_meanflow #_head5 #_pos1_w5 #_pta #colmax50 #scene #_seq #_seqWeightsceneshift16a1noclip #shiftpower #_pow3 #map1000 #6080 #selector_feat_fix4
 
 trainer:
-  check_val_every_n_epoch: 2
+  check_val_every_n_epoch: 4
  # val_check_interval: 0.0000002
   max_epochs: 32
 
 data:
-  train_batch_size: 128
+  train_batch_size: 256
   val_batch_size: 64
 #  train_raw_dir: ${paths.cache_root}/training_map2_init5 #init0_light #init0_light  #init10_inter
   train_raw_dir: ${paths.cache_root}/training_mapall_init5 #init0_light #init0_light  #init10_inter
