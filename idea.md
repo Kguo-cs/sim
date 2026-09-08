@@ -27,6 +27,9 @@ Body orientation change of neighbors leads to scale-free correlation in collecti
 
 2. 临界状态。 Criticality 是否是自然群体在 responsiveness 与 robustness 之间选择出来的计算状态？
 
+Maximal response to a mechanical leader at critical group size in ant collectives
+Nature Communications 2025。
+
 3。感知驱动的群体机制 
 
 Allocentric flocking
@@ -40,7 +43,6 @@ Allocentric flocking
 Flow interactions lead to self-organized flight formations disrupted by self-amplifying waves
 
 用 flapping-wing robotic experiments 证明，个体间的 aerodynamic wake 本身就能产生自组织排列，同时也会形成放大的 disturbance waves。
-
 
 
 通用群体智能（General collective intelligence, GCI）这一概念涵盖广泛，可用于描述社会学、生物学乃至近期人工智能体集群中的智能现象。本文主要讨论面向多机器人系统的GCI。其他术语如“通用集群智能”（general swarm intelligence）也表达类似概念，但我对使用“集群智能”（swarm intelligence）一词比较犹豫，因为它特别强调“自下而上”的范式——即从简单个体行为涌现出集体复杂行为——这与本文所阐述的GCI内涵并不完全一致。

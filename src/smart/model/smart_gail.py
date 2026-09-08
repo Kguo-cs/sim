@@ -861,10 +861,10 @@ class SMART_GAIL(SMART):
         optimizer,
     ) -> None:
         #normalized = advantages_flat.view_as(advantages_2d)
-        tokenized_agent["advantages"] =advantages_flat.view_as(advantages_2d[:tokenized_agent["noise_feat"].shape[1]]) #normalized[:tokenized_agent["noise_feat"].shape[1]]
+        #tokenized_agent["advantages"] =advantages_flat.view_as(advantages_2d[:tokenized_agent["noise_feat"].shape[1]]) #normalized[:tokenized_agent["noise_feat"].shape[1]]
 
         match_loss, col_loss, pos_loss, heading_loss, shape_loss, vel_loss = self.encoder.init_decoder(tokenized_agent)
-        rl_loss = tokenized_agent["rl_loss"]
+        rl_loss = torch.zeros_like(match_loss)#tokenized_agent["rl_loss"]
         reference = match_loss
         metrics = {
             "match_loss": match_loss,
