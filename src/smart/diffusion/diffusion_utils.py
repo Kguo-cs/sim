@@ -422,7 +422,7 @@ def _time_weight(
     valid = (t > 0) & (t < 1)
 
     if x_pred:
-        weight = t.clamp_min(t_eps).reciprocal()#.square()
+        weight = t.clamp_min(t_eps).reciprocal().square()
         if max_loss_weight is not None:
             weight = weight.clamp_max(max_loss_weight)
     else:
