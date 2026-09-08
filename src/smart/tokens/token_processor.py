@@ -160,20 +160,9 @@ class TokenProcessor(torch.nn.Module):
         if "ego_mask" not in agent:
             agent["ego_mask"] = self._make_ego_mask(agent["batch"])
 
-        agent["sampled_pos"] = self._as_time_tensor(agent["sampled_pos"], 3)
-        agent["sampled_heading"] = self._as_time_tensor(
-            agent["sampled_heading"], 2
-        )
-        agent["sampled_idx"] = self._as_time_tensor(
-            agent["sampled_idx"], 2
-        ).long()
-
-        shape = agent.get("shape", agent.get("initial_shape"))
-        if shape is None:
-            raise KeyError("get_init requires shape or initial_shape")
-        agent["shape"] = shape
         agent["initial_pos"] = agent["sampled_pos"][:, 0]
         agent["initial_heading"] = agent["sampled_heading"][:, 0]
+        agent["initial_shape"] = agent["shape"] #[:, 0]
 
         ego_mask = agent["ego_mask"]
         ego_idx = agent["sampled_idx"][ego_mask]
@@ -669,13 +658,6 @@ class TokenProcessor(torch.nn.Module):
         if "sampled_pos" not in cached:
             return result
 
-        result["sampled_pos"] = self._as_time_tensor(cached["sampled_pos"], 3)
-        result["sampled_heading"] = self._as_time_tensor(
-            cached["sampled_heading"], 2
-        )
-        result["sampled_idx"] = self._as_time_tensor(
-            cached["sampled_idx"], 2
-        ).long()
         result["token_mask"] = (
             self._as_time_tensor(cached["token_mask"], 2)
             if "token_mask" in cached

@@ -14,7 +14,7 @@ defaults:
 
   # experiment configs allow for version control of specific hyperparameters
   # e.g. best hyperparameters for given model and datamodule
-  - experiment: init_bc #model_gail #model_finetune #init_flow #gen_iq_finetune #wosac_gen_sub  #wosac_sub #gen_finetune #iq_finetune
+  - experiment: wosac_gen_sub #model_gail #model_finetune #init_flow #gen_iq_finetune #wosac_gen_sub  #wosac_sub #gen_finetune #iq_finetune
 
 action: fit # fit, finetune, validate, test
 

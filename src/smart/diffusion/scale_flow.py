@@ -95,19 +95,8 @@ class ScaleFlow(nn.Module):
         self.num_branch_steps = int(
             getattr(args, "num_branch_steps", 1)
         )
-        if self.num_branch_steps <= 0:
-            raise ValueError(
-                "num_branch_steps must be positive."
-            )
-
         self.fixed_branch_steps = self._parse_fixed_branch_steps(
             getattr(args, "branch_steps", None)
-        )
-
-        # Simple timestep-adaptive noise. target_step_std is the desired
-        # transition standard deviation in normalized state space at t=1.
-        self.target_step_std = float(
-            getattr(args, "target_step_std", 0.1)
         )
         self.use_ref = False
         self.apply(weight_init)
@@ -826,7 +815,7 @@ class ScaleFlow(nn.Module):
             and branch_mask is not None
             and branch_mask.any()
             and self.token_processor.learn_init
-           # and "gt_z_raw" not in tokenized_agent
+            and "gt_z_raw" not in tokenized_agent
         ):
             noise_level =0.5 #self.get_adaptive_noise_level(time, next_time)
             noise_level = noise_level * branch_mask[:, None].to(latent.dtype)

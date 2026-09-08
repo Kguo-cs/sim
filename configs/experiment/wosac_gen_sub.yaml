@@ -39,7 +39,7 @@ model:
       learn_init: True
 
 
-ckpt_path: "/home/ke/code/sim/src/waymo_data/all32_08_m1_05sum_l1sq_w1_nolearn.ckpt"
+ckpt_path: "/home/ke/code/sim/src/waymo_data/all32_08_m1_05sum_l1sq_w1_nolearn-epoch=3-step=121752-valmeta=0.6516.ckpt"
 
 trainer:
   limit_train_batches: 1.0
