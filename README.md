@@ -4,11 +4,11 @@ kefu321
 
 rsync -avz /home/ke/code/sim/src/waymo_data/bc_init64_l1_v1.ckpt ke@10.87.114.128:~/keguo/sim/src/waymo_data/ #full/
 
-rsync -avz -e "ssh -p 32884" /home/ke/code/sim/src/waymo_data/full/training_mapall_init5 guoke@sprl-server9.dynip.ntu.edu.sg:~/sim/src/waymo_data/full/
+rsync -avz -e "ssh -p 32884" ./waymo_data/full/training_map2_init5v guoke@sprl-server9.dynip.ntu.edu.sg:~/sim/src/waymo_data/full/
 
 rsync -avz /home/ke/code/sim/src/waymo_data/xflow512_match_l1_v1-epoch=63-step=60928-valmeta=0.6509.ckpt ke@10.87.225.106:~/code/sim/src/waymo_data/ #full/
 
-rsync -avz ke@10.87.114.128:~/keguo/sim/src/waymo_data/full/training_mapall_init5 ./
+rsync -avz ke@10.87.114.128:~/keguo/sim/src/waymo_data/full/training_mapall_init5v ./
 
 rsync -avz ke@10.87.114.128:~/keguo/sim/src/logs/all32_08_match1_05sum_l1sq_w1_branch1_R02/2026-09-05_13-14-16/bc/464l09bs/checkpoints/all32_08_match1_05sum_l1sq_w1_branch1_R02-epoch=3-step=152321-valmeta=0.6490.ckpt ./
 

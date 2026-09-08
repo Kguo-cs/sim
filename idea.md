@@ -29,6 +29,8 @@ Body orientation change of neighbors leads to scale-free correlation in collecti
 
 Maximal response to a mechanical leader at critical group size in ant collectives
 Nature Communications 2025。
+群体处于 critical regime 时，对单个“leader”级别的信息是不是响应最大？ 答案是：在这个蚂蚁 cooperative-transport system 里，是。
+作者特别指出，约 20 只蚂蚁也是该物种自然 cooperative transport 中常见的群体规模。
 
 3。感知驱动的群体机制 
 
@@ -47,3 +49,5 @@ Flow interactions lead to self-organized flight formations disrupted by self-amp
 
 通用群体智能（General collective intelligence, GCI）这一概念涵盖广泛，可用于描述社会学、生物学乃至近期人工智能体集群中的智能现象。本文主要讨论面向多机器人系统的GCI。其他术语如“通用集群智能”（general swarm intelligence）也表达类似概念，但我对使用“集群智能”（swarm intelligence）一词比较犹豫，因为它特别强调“自下而上”的范式——即从简单个体行为涌现出集体复杂行为——这与本文所阐述的GCI内涵并不完全一致。
 
+6. collective sensing
+Collective sensing in electric fish Nature 2024
