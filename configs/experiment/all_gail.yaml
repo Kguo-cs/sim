@@ -9,7 +9,7 @@ model:
     lr_min_ratio: 0.05
     token_processor:
       pred_init: True
-      learn_init: False
+      learn_init: True
 
     finetune: true
     decoder:
@@ -22,7 +22,7 @@ ckpt_path: "./waymo_data/xflow512_matchraw_l1_v1-epoch=27-step=53284-valmeta=0.6
 #ckpt_path: "./waymo_data/xflow512_match_noiseposvhead1_posheadl1-epoch=59-step=57120-valmeta=0.6496.ckpt"
 #ckpt_path: "./waymo_data/AIRL32_interdis_mean_203_disnodiff_nonego_epoch=9-step=152190_0.79036.ckpt"
 
-task_name: all32_08_m1_05sum_l1_v1_nolearn #_05_pre #_dis_R02feat #_br1_R02_ramsq  #sepnorm #v001 #invnoiseW #col01col10noent_policynosde #_policynosdesdegp #nopolicylearn05 #valpolicysq_nosqcol #_nodiff #_ego  #_pre_l1_v1_dis5e5 #_auto #_auto #_dis1e5_normall_nosq #_dis15 #_l1 #5_t_l1_L8 #_Dis5e5 #_l1 #_t_ #mse #b c18 #_gp #noise01_1t_gp #_nocol #_dis503 #std05t1t #01exact #noise05_1t #std05t1t2 #_99 #_perturb #_1e3 #_nosamedis #_pos2 #_local_policypos2policymint_rl10 #_shape0 #@_noisedim #_nostable #_adv10 #@_gp001 _a60 #_dis1e4_t60ref_clip01clip10_nogp #_sde100 #los01pg100 #gp001shape10_loss001clip01_agent_nocopy #loss001_clip001decay__noref_dis1e5 #999 #Z_Newz #rewardNewMyexp01d2_l1 #ppo001loss01kl01_clip01ppow01kl001 # samplelossPos #_nocol #_large0shape10noshape10_exp_
+task_name: all32_08_m1_05sum_l1_v1_rl05 #_nolearn #_05_pre #_dis_R02feat #_br1_R02_ramsq  #sepnorm #v001 #invnoiseW #col01col10noent_policynosde #_policynosdesdegp #nopolicylearn05 #valpolicysq_nosqcol #_nodiff #_ego  #_pre_l1_v1_dis5e5 #_auto #_auto #_dis1e5_normall_nosq #_dis15 #_l1 #5_t_l1_L8 #_Dis5e5 #_l1 #_t_ #mse #b c18 #_gp #noise01_1t_gp #_nocol #_dis503 #std05t1t #01exact #noise05_1t #std05t1t2 #_99 #_perturb #_1e3 #_nosamedis #_pos2 #_local_policypos2policymint_rl10 #_shape0 #@_noisedim #_nostable #_adv10 #@_gp001 _a60 #_dis1e4_t60ref_clip01clip10_nogp #_sde100 #los01pg100 #gp001shape10_loss001clip01_agent_nocopy #loss001_clip001decay__noref_dis1e5 #999 #Z_Newz #rewardNewMyexp01d2_l1 #ppo001loss01kl01_clip01ppow01kl001 # samplelossPos #_nocol #_large0shape10noshape10_exp_
 
 trainer:
   #val_check_interval: 0.5
