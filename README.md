@@ -68,7 +68,7 @@ CUDA_VISIBLE_DEVICES=1 setsid nohup python -m sd.train1 > 1.log 2>&1 &
 
 #0,2,3 1,2,3  -> 0,1, 2
 
-
+10.100.40.196
 ssh 10.87.225.106
 source "/home/ke/miniconda3/bin/activate"
 cd /home/ke/code/sim/src
