@@ -191,14 +191,14 @@ class SMART(LightningModule):
     def validation_step(self, data, batch_idx):
         # if batch_idx<86:
         #     return None
-        # self.token_processor.pred_init=self.scenario_gen
-        # self.token_processor.learn_init=self.scenario_gen
-        # if self.token_processor.pred_init:
-        #     self.encoder.agent_encoder.interative_decoder.gail_start_step = 0
-        #     self.encoder.agent_encoder.interative_decoder.dis_start_step = 0 if self.token_processor.learn_init else 1
-        # else:
-        #     self.encoder.agent_encoder.interative_decoder.gail_start_step = 1
-        #     self.encoder.agent_encoder.interative_decoder.dis_start_step = 2
+        self.token_processor.pred_init=self.scenario_gen
+        self.token_processor.learn_init=self.scenario_gen
+        if self.token_processor.pred_init:
+            self.encoder.agent_encoder.interative_decoder.gail_start_step = 0
+            self.encoder.agent_encoder.interative_decoder.dis_start_step = 0 if self.token_processor.learn_init else 1
+        else:
+            self.encoder.agent_encoder.interative_decoder.gail_start_step = 1
+            self.encoder.agent_encoder.interative_decoder.dis_start_step = 2
 
         tokenized_map, tokenized_agent = self.token_processor(data)
 
