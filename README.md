@@ -2,7 +2,7 @@
 
 kefu321
 
-rsync -avz /home/ke/code/sim/src/waymo_data/bc_init64_l1_v1.ckpt ke@10.87.114.128:~/keguo/sim/src/waymo_data/ #full/
+rsync -avz /home/ke/code/sim/src/waymo_data/xflow512_matchraw_l1_v1-epoch=27-step=53284-valmeta=0.6499.ckpt ke@10.87.114.128:~/keguo/sim/src/waymo_data/ #full/
 
 rsync -avz -e "ssh -p 32884" ./waymo_data/xflow512_matchraw_l1_v1-epoch=27-step=53284-valmeta=0.6499.ckpt guoke@sprl-server9.dynip.ntu.edu.sg:~/sim/src/waymo_data/ #full/
 
