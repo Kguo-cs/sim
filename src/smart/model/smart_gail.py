@@ -886,26 +886,26 @@ class SMART_GAIL(SMART):
     # Lightning entry point
     # ------------------------------------------------------------------
     def training_step(self, data: Any, batch_idx: int) -> Tensor:
-        if random.random()<0.5:
-            self.token_processor.learn_init = False
-            self.token_processor.pred_init = True
-        else:
-            self.token_processor.learn_init = True
-            self.token_processor.pred_init = True
-
-
-        if self.token_processor.pred_init:
-            self.encoder.discriminator.interative_decoder.gail_start_step = 0
-            self.encoder.discriminator.interative_decoder.dis_start_step = 0 if self.token_processor.learn_init else 1
-            self.encoder.agent_encoder.interative_decoder.gail_start_step = 0
-            self.encoder.agent_encoder.interative_decoder.dis_start_step = 0 if self.token_processor.learn_init else 1
-
-        else:
-            self.encoder.agent_encoder.interative_decoder.gail_start_step = 1
-            self.encoder.agent_encoder.interative_decoder.dis_start_step = 2
-
-            self.encoder.discriminator.interative_decoder.gail_start_step = 1
-            self.encoder.discriminator.interative_decoder.dis_start_step = 2
+        # if random.random()<0.5:
+        #     self.token_processor.learn_init = False
+        #     self.token_processor.pred_init = True
+        # else:
+        #     self.token_processor.learn_init = True
+        #     self.token_processor.pred_init = True
+        #
+        #
+        # if self.token_processor.pred_init:
+        #     self.encoder.discriminator.interative_decoder.gail_start_step = 0
+        #     self.encoder.discriminator.interative_decoder.dis_start_step = 0 if self.token_processor.learn_init else 1
+        #     self.encoder.agent_encoder.interative_decoder.gail_start_step = 0
+        #     self.encoder.agent_encoder.interative_decoder.dis_start_step = 0 if self.token_processor.learn_init else 1
+        #
+        # else:
+        #     self.encoder.agent_encoder.interative_decoder.gail_start_step = 1
+        #     self.encoder.agent_encoder.interative_decoder.dis_start_step = 2
+        #
+        #     self.encoder.discriminator.interative_decoder.gail_start_step = 1
+        #     self.encoder.discriminator.interative_decoder.dis_start_step = 2
 
 
         tokenized_map, tokenized_agent = self.token_processor(data)
