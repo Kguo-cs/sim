@@ -881,7 +881,7 @@ class ScaleFlow(nn.Module):
                 prediction_mean=prediction[:,:self.model.input_dim]
                 prediction_logstd=prediction[:,self.model.input_dim:]
 
-                latent=prediction_mean+prediction_logstd.exp()
+                latent=prediction_mean+prediction_logstd.exp()*torch.randn_like(prediction_mean)
 
                 tokenized_agent["noise_feat"]=tokenized_agent[ "noise_feat_cur" ][:,None]
                 tokenized_agent["refined_z"] = latent
