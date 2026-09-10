@@ -199,7 +199,6 @@ def matching_loss(
         + w_vel * vel_loss
     )
     #total_loss = F.mse_loss(real_state,fake_state, reduction="none").mean(-1)*w_pos
-    total_loss=w_pos*F.l1_loss(real_state,fake_state,reduction='none').mean(-1)
     return total_loss, pos_loss, heading_loss, shape_loss, vel_loss
 
 
@@ -473,10 +472,10 @@ def get_diff_loss(
         )
         collision_loss = (edge_loss * weight[start_idx]).mean()
 
-    w_pos=w_heading=w_shape=w_vel=1
-    real_state=real_state/scale
-    fake_state=fake_state/scale
-
+    # w_pos=w_heading=w_shape=w_vel=1
+    # real_state=real_state/scale
+    # fake_state=fake_state/scale
+    #
 
     losses = matching_loss(
         real_state,
@@ -489,4 +488,7 @@ def get_diff_loss(
         huber_beta=huber_beta,
         scale=scale
     )
+
+    # losses[0]=w_pos*F.l1_loss(real_state,fake_state,reduction='none').mean(-1)
+
     return losses[0], collision_loss, *losses[1:]
