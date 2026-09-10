@@ -16,21 +16,21 @@ model:
 #      dis_weight: 20
 #      dist_decay:  3
 
-#ckpt_path: "./waymo_data/bc_init64_n30_epoch=15-step=121760-valmeta=0.6495.ckpt"
-ckpt_path: "./waymo_data/xflow512_match_l1_v1-epoch=63-step=60928-valmeta=0.6509.ckpt"
+ckpt_path: "./waymo_data/xflow512_matchraw_l1_v1-epoch=27-step=53284-valmeta=0.6499.ckpt"
+#ckpt_path: "./waymo_data/xflow512_match_l1_v1-epoch=63-step=60928-valmeta=0.6509.ckpt"
 #ckpt_path: "./waymo_data/xflow512_match_noiseposvhead1_posheadl1-epoch=59-step=57120-valmeta=0.6496.ckpt"
 
-task_name: model32_a60_gp001_l10_step20_dis5e5 #_token10_auto #_dis1e4 #_l1max25 #_gp001 #_len8_nonew_token_noshapeclip_nowrap_dismask # #_t60sum #_nogp #_max25 #_noisevhead1  #_503 #_01bc #_pl10 #@edge001_len18 #_10_clip #z #intergp001 #_w1 #_dise5 #_min1
+task_name: model32_l1_v1 #_token10_auto #_dis1e4 #_l1max25 #_gp001 #_len8_nonew_token_noshapeclip_nowrap_dismask # #_t60sum #_nogp #_max25 #_noisevhead1  #_503 #_01bc #_pl10 #@edge001_len18 #_10_clip #z #intergp001 #_w1 #_dise5 #_min1
 
 trainer:
-  val_check_interval: 0.5 #25
-  #val_check_interval: 0.000002
+  #val_check_interval: 0.5 #25
+  val_check_interval: 0.000002
   max_epochs: 5
   gradient_clip_val: 0.0
 
 data:
-  train_batch_size: 32 #6
-  val_batch_size: 64
-  num_workers: 1
+  train_batch_size: 1 #6
+  val_batch_size: 1
+  #num_workers: 1
 
 action: finetune
