@@ -14,7 +14,7 @@ rsync -avz ke@10.87.114.128:~/keguo/sim/src/logs/all32_08_match1_05sum_l1sq_w1_b
 
 rsync -avz ke@10.87.225.106:~/code/sim/src/logs/all32_d58_std005_token10_pre_sq/2026-08-15_21-39-04/bc/iwgs04wt/checkpoints/all32_d58_std005_token10_pre_sq-epoch=3-step=159798-valmeta=0.6539.ckpt ./
 
-rsync -avz -e "ssh -p 32884" guoke@sprl-server9.dynip.ntu.edu.sg:~/sim/src/logs/xflow512_matchraw_l1_v1/2026-09-08_11-16-55/bc/buplip36/checkpoints/xflow512_matchraw_l1_v1-epoch=27-step=53284-valmeta=0.6499.ckpt ./
+rsync -avz -e "ssh -p 32884" guoke@sprl-server9.dynip.ntu.edu.sg:~/sim/src/logs/all32_08_m1_05sum_l1_v1_nolearn/2026-09-09_11-44-40/bc/6k36bpg2/checkpoints/all32_08_m1_05sum_l1_v1_nolearn-epoch=2-step=91314-valmeta=0.6521.ckpt ./
 
 
 qsub -I -l select=1:ngpus=1 -l walltime=24:00:00 -P personal-ke.guo
@@ -58,8 +58,8 @@ setsid nohup torchrun --nproc_per_node=4 -m run trainer=ddp > 1.log 2>&1 &
 
 
 setsid  nohup torchrun --nproc_per_node=4  -m run trainer=ddp  >  1.log 2>&1 &
-
-CUDA_VISIBLE_DEVICES=2,3 setsid nohup torchrun --nproc_per_node=2 --master_port=29503  -m run trainer=ddp >  23.log 2>&1 & 
+f
+CUDA_VISIBLE_DEVICES=2,3 setsid nohup torchrun --nproc_dadasper_node=2 --master_port=29503  -m run trainer=ddp >  23.log 2>&1 & 
 
 CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 --master_port=29501  -m run1 trainer=ddp >  2.log 2>&1 & 
 

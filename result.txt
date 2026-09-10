@@ -1029,6 +1029,16 @@ all32_08_m1_05sum_l1sq_w1_nolearn-epoch=3-step=121752-valmeta=0.6516.ckpt
 
 0.6511
 
+all32_08_m1_05sum_l1sq_w1_nolearn.ckpt
+
+
+all32_08_m1_05sum_l1_v1_nolearn-epoch=2-step=91314-valmeta=0.6521.ckpt
+
+
+
+
+
+
 
 take all position for generation
 simformer: For each
