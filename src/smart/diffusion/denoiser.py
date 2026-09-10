@@ -109,7 +109,12 @@ class InitDenoiser(nn.Module):
             # noise embedding + type embedding directly.
             self.type_a_emb = nn.Embedding(self.num_classes + 1, hidden_dim)
             self.noise_embedding = MLPLayer(self.m_delta_dim, hidden_dim, hidden_dim)
-            self.proj_in_m_delta = nn.Linear(self.m_delta_dim - 4, hidden_dim)
+
+            if self.x_pred:
+                self.proj_in_m_delta = nn.Linear(self.m_delta_dim - 4, hidden_dim)
+            else:
+                self.proj_in_m_delta = nn.Linear(self.m_delta_dim , hidden_dim)
+
 
         # Ego-context embedding. The input is:
         #   local ego poses relative to the generated agent + per-scene type count.
@@ -331,7 +336,10 @@ class InitDenoiser(nn.Module):
         """
         beta = self._format_beta(1-beta, m_delta.shape[0])
 
-        feat_a = self.proj_in_m_delta(m_delta[:, 4:])
+        if self.x_pred:
+            feat_a = self.proj_in_m_delta(m_delta[:, 4:])
+        else:
+            feat_a = self.proj_in_m_delta(m_delta)
         feat_a = feat_a + self.noise_embedding(beta)
         feat_a = feat_a + agent_type_embed
         return feat_a

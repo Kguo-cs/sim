@@ -91,6 +91,7 @@ class ScaleFlow(nn.Module):
                 num_heads=args.num_heads,
                 head_dim=args.head_dim,
                 dropout=args.dropout,
+                x_pred=False
             )
 
         self.apply(weight_init)
