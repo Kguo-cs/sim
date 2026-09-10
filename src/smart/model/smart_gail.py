@@ -863,8 +863,36 @@ class SMART_GAIL(SMART):
         #normalized = advantages_flat.view_as(advantages_2d)
         tokenized_agent["advantages"] =advantages_flat.view_as(advantages_2d[:tokenized_agent["noise_feat"].shape[1]]) #normalized[:tokenized_agent["noise_feat"].shape[1]]
 
+        if self.token_processor.use_refiner:
+            latent=tokenized_agent["gen_z"]
+            non_ego = ~tokenized_agent[  "ego_mask" ]
+
+            prediction = self.encoder.init_decoder.G1.refine_model(
+                latent,
+                torch.zeros_like(latent[:, :1]),
+                tokenized_agent,
+                tokenized_agent["initial_map_feature"],
+            )[non_ego]
+
+            mu = prediction[:, :prediction.shape[-1]//2]
+            std = prediction[:, prediction.shape[-1]//2:].exp()
+
+            dist = torch.distributions.Normal(mu, std)
+
+            selected_log_prob = dist.log_prob(tokenized_agent["refined_z"][non_ego]).sum(dim=-1)
+            advantages = tokenized_agent["advantages"][0] # a,t
+
+            selected_advantage = advantages[non_ego]
+
+            rl_loss = -(selected_log_prob   * selected_advantage ).mean()
+
+            self._optimizer_step(optimizer, rl_loss)
+
+            return rl_loss
+
+
         match_loss, col_loss, pos_loss, heading_loss, shape_loss, vel_loss = self.encoder.init_decoder(tokenized_agent)
-        rl_loss = tokenized_agent["rl_loss"]*0.1
+        rl_loss = tokenized_agent["rl_loss"]
         reference = match_loss
         metrics = {
             "match_loss": match_loss,
@@ -906,7 +934,6 @@ class SMART_GAIL(SMART):
         #
         #     self.encoder.discriminator.interative_decoder.gail_start_step = 1
         #     self.encoder.discriminator.interative_decoder.dis_start_step = 2
-
 
         tokenized_map, tokenized_agent = self.token_processor(data)
 

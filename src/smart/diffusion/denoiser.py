@@ -53,92 +53,47 @@ class InitDenoiser(nn.Module):
     def __init__(
         self,
         token_processor,
-        dataset: str,
         input_dim: int,
         hidden_dim: int,
         output_dim: int,
-        output_head: bool,
-        init_timestep: int,
         num_freq_bands: int,
         num_layers: int,
         num_heads: int,
         head_dim: int,
         dropout: float,
-        diff_type: str,
-        m_dim: int,
-        mean_flow: bool = False,
         x_pred: bool = True,
-        learn_noise: bool = False,
-        pred_all_pos: bool = False,
         init_embedding_mode: str = "original",
     ) -> None:
         super().__init__()
 
-        self.dataset = dataset
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
-        self.init_timestep = init_timestep
         self.num_freq_bands = num_freq_bands
         self.num_layers = num_layers
         self.num_heads = num_heads
         self.head_dim = head_dim
         self.dropout = dropout
-        self.diff_type = diff_type
-        self.m_dim = m_dim
         self.x_pred = x_pred
-        self.mean_flow = bool(mean_flow)
         self.token_processor = token_processor
         self.init_embedding_mode = init_embedding_mode
 
-        # Keep attributes used by ScaleFlow.
-        self.use_roformer = True
-        self.use_graph = True
-        self.use_padding = False
-        self.use_rel_ego = True
-        self.ego_rel = True
-        self.use_scale = False
-        self.use_all_type = False
-        self.use_dit = False
-        self.use_bin = False
-        self.learn_noise = False
-        self.schedule_loss = False
-        self.use_return_conditioned = False
-        self.use_prev_condition = False
         self.label_drop_prob = 0.0
         self.map_drop_prob=0.0
 
-        # mean_flow=True is supported by adding an interval-length embedding
-        # through tokenized_agent["meanflow_h"]. If the caller does not set it,
-        # h defaults to zero and the model behaves like a boundary velocity model.
-
         self.num_classes = 3
         self.shape_dim = 2
-        self.m_delta_dim = 8
-        self.output_dim =8 #self.m_delta_dim
+        self.m_delta_dim = input_dim
+        self.output_dim =output_dim
 
         self.register_buffer("normal_mean", torch.zeros(1, self.m_delta_dim))
         self.register_buffer("normal_scale", torch.ones(1, self.m_delta_dim))
 
-        self.use_cfg_cond=False
-
-        if self.use_cfg_cond:
-            self.cfg_embed = MLPLayer(1, self.hidden_dim, self.hidden_dim)
-
         # Different groups can still use different schedules.
-        self.schedule = LearnableGroupedPowerSchedule(
-            group_dims=(2, 2, 2, self.m_delta_dim - 6)
-        )
-
-        if self.mean_flow:
-            # Extra embedding for the MeanFlow interval length h = r - t.
-            # beta still carries the current time t; h lets the same denoiser
-            # distinguish u(z_t,t,t) from u(z_t,t,r).
-            self.meanflow_h_embedding = MLPLayer(
-                1, hidden_dim, hidden_dim
-            )
-
+        # self.schedule = LearnableGroupedPowerSchedule(
+        #     group_dims=(2, 2, 2, self.m_delta_dim - 6)
+        # )
+        #
         if self.init_embedding_mode == "new":
-
             # New path: AgentTokenEncoder-style state/noise/type/shape embedding.
             self.state_embedder = DenoiserStateEmbedder(
                 token_processor=token_processor,
@@ -199,12 +154,7 @@ class InitDenoiser(nn.Module):
             ]
         )
 
-        self.gaussian_output=False
-
-        if self.gaussian_output:
-            self.to_out_m_delta1 = MLPLayer(hidden_dim, hidden_dim, self.output_dim*2)
-        else:
-            self.to_out_m_delta = MLPLayer(hidden_dim, hidden_dim, self.output_dim)
+        self.to_out_m_delta = MLPLayer(hidden_dim, hidden_dim, self.output_dim)
 
         self.apply(weight_init)
 
@@ -437,13 +387,6 @@ class InitDenoiser(nn.Module):
 
         feat_a = feat_a + ego_embedding
 
-        if self.use_cfg_cond:
-            cfg=tokenized_agent["cfg"]
-
-            cfg_embed =self.cfg_embed(cfg[:,None])[batch]
-
-            feat_a=feat_a+cfg_embed
-
         return feat_a, pos_s, theta
 
     # ---------------------------------------------------------------------
@@ -563,10 +506,7 @@ class InitDenoiser(nn.Module):
                     edge_index_pl2a,
                 )
 
-        if self.gaussian_output:
-            return self.to_out_m_delta1(feat_a)
-        else:
-            return self.to_out_m_delta(feat_a)
+        return self.to_out_m_delta(feat_a)
 
     def forward(
         self,
@@ -574,7 +514,7 @@ class InitDenoiser(nn.Module):
         beta: torch.Tensor,
         tokenized_agent,
         map_feature: Mapping[str, torch.Tensor],
-        eval_mask: torch.Tensor,
+        eval_mask: torch.Tensor=None,
         mode: int = 1,
         use_map_condition: Optional[bool] = True,
     ) -> torch.Tensor:

@@ -50,24 +50,16 @@ class ScaleFlow(nn.Module):
         self.x_pred = True
         self.model = InitDenoiser(
             token_processor,
-            dataset=args.dataset,
             input_dim=args.input_dim,
             hidden_dim=args.hidden_dim,
-            output_dim=args.output_dim,
-            output_head=args.output_head,
-            init_timestep=args.init_timestep,
+            output_dim=args.input_dim,
             num_freq_bands=args.num_freq_bands,
             num_layers=args.num_denoiser_layers,
             num_heads=args.num_heads,
             head_dim=args.head_dim,
             dropout=args.dropout,
-            diff_type=args.diff_type,
-            m_dim=args.m_dim,
-            mean_flow=False,
-            x_pred=True,
         )
 
-        self.use_all_type = self.model.use_all_type
         self.t_eps = 0.05
         self.token_processor=token_processor
 
@@ -75,19 +67,6 @@ class ScaleFlow(nn.Module):
         # Initial-state policy optimization
         # --------------------------------------------------------------
         self.use_sde = bool( gail and getattr(token_processor, "learn_init", False) )
-
-        self.use_init_ppo_ratio = bool(
-            getattr(args, "use_init_ppo_ratio", False)
-        )
-        self.init_adv_clip = float(
-            getattr(args, "init_adv_clip", 10.0)
-        )
-        self.init_logprob_clip = float(
-            getattr(args, "init_logprob_clip", 50.0)
-        )
-        self.init_ppo_clip = float(
-            getattr(args, "init_ppo_clip", 0.1)
-        )
 
         # --------------------------------------------------------------
         # Multi-branch sampling
@@ -98,7 +77,22 @@ class ScaleFlow(nn.Module):
         self.fixed_branch_steps = self._parse_fixed_branch_steps(
             getattr(args, "branch_steps", None)
         )
-        self.use_ref = False
+        self.use_refiner = token_processor.use_refiner
+
+        if self.use_refiner:
+            self.use_sde=False
+            self.refine_model = InitDenoiser(
+                token_processor,
+                input_dim=args.input_dim,
+                hidden_dim=args.hidden_dim,
+                output_dim=args.input_dim*2,
+                num_freq_bands=args.num_freq_bands,
+                num_layers=1,
+                num_heads=args.num_heads,
+                head_dim=args.head_dim,
+                dropout=args.dropout,
+            )
+
         self.apply(weight_init)
 
     @staticmethod
@@ -140,49 +134,6 @@ class ScaleFlow(nn.Module):
             )
 
         return steps
-
-    def _schedule_time(
-        self,
-        time: Tensor,
-    ) -> Tensor:
-        """Apply the optional grouped learnable schedule.
-
-        Supported results:
-            [N, 1]
-            [N, state_dim]
-        """
-        schedule = getattr(
-            self.model,
-            "schedule",
-            None,
-        )
-
-        scheduled = (
-            schedule(time)
-            if callable(schedule)
-            else time
-        )
-
-        if (
-            scheduled.ndim != 2
-            or scheduled.shape[0] != time.shape[0]
-        ):
-            raise ValueError(
-                "Time schedule must return "
-                "[N, 1] or [N, state_dim], got "
-                f"{tuple(scheduled.shape)}."
-            )
-
-        if scheduled.shape[-1] not in (
-            1,
-            self.model.m_delta_dim,
-        ):
-            raise ValueError(
-                "Scheduled time must have either one "
-                "channel or state_dim channels."
-            )
-
-        return scheduled
 
     # ==================================================================
     # Standard flow helpers
@@ -310,24 +261,24 @@ class ScaleFlow(nn.Module):
         self,
         x: Tensor,
         tokenized_agent: HeteroData,
-        initial_map_feature: Mapping[str, Tensor],
+        map_feature: Mapping[str, Tensor],
     ):
         loss=self._supervised_loss(
             x,
             tokenized_agent,
-            initial_map_feature,
+            map_feature,
         )
 
         if "advantages" in tokenized_agent:
             if self.use_sde:
                 rl_loss = self._sde_advantage_loss(
                     tokenized_agent,
-                    initial_map_feature,
+                    map_feature,
                 )
             else:
                 rl_loss = self._direct_advantage_loss(
                     tokenized_agent,
-                    initial_map_feature,
+                    map_feature,
                 )
 
             tokenized_agent["rl_loss"] = rl_loss
@@ -560,100 +511,6 @@ class ScaleFlow(nn.Module):
         ).square().mean()
 
         return loss
-    # def _direct_advantage_loss(
-    #     self,
-    #     tokenized_agent: HeteroData,
-    #     map_feature: Mapping[str, Tensor],
-    # ) -> Tensor:
-    #     sampled_x0 = tokenized_agent["gen_z"]
-    #
-    #     noise, time, latent = (
-    #         self._prepare_supervised_batch(
-    #             sampled_x0,
-    #             tokenized_agent,
-    #         )
-    #     )
-    #
-    #     velocities, current_x0 = self._model_velocity(
-    #         latent,
-    #         time,
-    #         tokenized_agent,
-    #         map_feature,
-    #     )
-    #
-    #     non_ego = ~tokenized_agent[
-    #         "ego_mask"
-    #     ].bool()
-    #
-    #     selected_advantage = tokenized_agent["advantages"].transpose(0, 1) [non_ego]
-    #
-    #     selected_velocity = velocities[non_ego]
-    #     fm_target =(noise-sampled_x0)[non_ego]
-    #
-    #     target = (
-    #             selected_velocity.detach()
-    #             + 0.1
-    #             * selected_advantage
-    #             * (fm_target - selected_velocity.detach())
-    #     )
-    #
-    #     loss = (selected_velocity-target).square().mean()
-    #
-    #     return loss
-
-
-        # scale = self.model.normal_scale.clamp_min(
-        #     1e-6
-        # )
-        #
-        # log_prob = self.adaptive_x0_logprob(
-        #     current_x0 / scale,
-        #     sampled_x0.detach() / scale,
-        # )
-        #
-        # num_agents = sampled_x0.shape[0]
-        #
-
-        # if not torch.any(non_ego):
-        #     return sampled_x0.new_zeros(())
-        #
-        #
-        # old_log_prob = log_prob.detach()
-        #
-        # ratio = (
-        #     log_prob - old_log_prob
-        # ).clamp(
-        #     -10.0,
-        #     10.0,
-        # ).exp()[non_ego]
-        #
-        # clipped_ratio = ratio.clamp(
-        #     1.0 - self.init_ppo_clip,
-        #     1.0 + self.init_ppo_clip,
-        # )
-        #
-        # tokenized_agent[
-        #     "sampled_match_loss"
-        # ] = -log_prob.detach()
-        #
-        # tokenized_agent[
-        #     "clip_ratio"
-        # ] = (
-        #     (
-        #         ratio
-        #         < 1.0 - self.init_ppo_clip
-        #     )
-        #     | (
-        #         ratio
-        #         > 1.0 + self.init_ppo_clip
-        #     )
-        # ).float().detach()
-        #
-        # return -torch.minimum(
-        #     ratio * advantages,
-        #     clipped_ratio * advantages,
-        # ).mean() * 100.0
-        #
     # ==================================================================
     # Multi-branch sampling
     # ==================================================================
@@ -778,16 +635,13 @@ class ScaleFlow(nn.Module):
     ):
         num_agents = latent.shape[0]
 
-        base_time = torch.full(
+        time = torch.full(
             (num_agents, 1),
             time_scalar,
             device=latent.device,
             dtype=latent.dtype,
         )
-        base_next_time = torch.full_like(base_time, next_time_scalar)
-
-        time = self._schedule_time(base_time)
-        next_time = self._schedule_time(base_next_time)
+        next_time = torch.full_like(time, next_time_scalar)
 
         self._fix_conditioned_agents(
             tokenized_agent["expert_input"],
@@ -815,7 +669,7 @@ class ScaleFlow(nn.Module):
             and branch_mask is not None
             and branch_mask.any()
             and self.token_processor.learn_init
-            #and "gt_z_raw" not in tokenized_agent
+           # and "gt_z_raw" not in tokenized_agent
         ):
             noise_level =0.5 #self.get_adaptive_noise_level(time, next_time)
             noise_level = noise_level * branch_mask[:, None].to(latent.dtype)
@@ -855,7 +709,7 @@ class ScaleFlow(nn.Module):
     def sample(
         self,
         tokenized_agent: HeteroData,
-        initial_map_feature: Mapping[str, Tensor],
+        map_feature: Mapping[str, Tensor],
         steps: int = 20,
         branch_steps: Optional[
             int | Sequence[int] | Tensor
@@ -962,7 +816,7 @@ class ScaleFlow(nn.Module):
                     timesteps[step],
                     timesteps[step + 1],
                     tokenized_agent,
-                    initial_map_feature,
+                    map_feature,
                     branch_mask=(
                         step_branch_mask[:, step]
                         if self.use_sde
@@ -1015,6 +869,23 @@ class ScaleFlow(nn.Module):
 
         if not self.use_sde:
             tokenized_agent["gen_z"] = latent
+
+            if self.use_refiner:
+                prediction = self.refine_model(
+                    latent,
+                    torch.zeros_like(latent[:,:1]),
+                    tokenized_agent,
+                    map_feature,
+                )
+
+                prediction_mean=prediction[:,:self.model.input_dim]
+                prediction_logstd=prediction[:,self.model.input_dim:]
+
+                latent=prediction_mean+prediction_logstd.exp()
+
+                tokenized_agent["noise_feat"]=tokenized_agent[ "noise_feat_cur" ][:,None]
+                tokenized_agent["refined_z"] = latent
+
             return latent
 
         latent_stack = torch.stack(
