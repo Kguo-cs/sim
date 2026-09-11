@@ -47,7 +47,6 @@ class ScaleFlow(nn.Module):
         self.hidden_dim = int(args.hidden_dim)
 
         # Standard x0-prediction flow. No Gaussian or MeanFlow output.
-        self.x_pred = True
         self.model = InitDenoiser(
             token_processor,
             input_dim=args.input_dim,
@@ -91,7 +90,7 @@ class ScaleFlow(nn.Module):
                 num_heads=args.num_heads,
                 head_dim=args.head_dim,
                 dropout=args.dropout,
-                x_pred=True
+                x_pred=False
             )
 
             # normalized-space exploration std
