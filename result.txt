@@ -1031,6 +1031,7 @@ all32_08_m1_05sum_l1sq_w1_nolearn-epoch=3-step=121752-valmeta=0.6516.ckpt
 
 all32_08_m1_05sum_l1sq_w1_nolearn.ckpt
 
+0.6507
 
 all32_08_m1_05sum_l1_v1_nolearn-epoch=2-step=91314-valmeta=0.6521.ckpt
 
