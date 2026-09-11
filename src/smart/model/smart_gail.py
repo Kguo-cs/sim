@@ -1053,10 +1053,10 @@ class SMART_GAIL(SMART):
                                 "params": self.encoder.init_decoder.G1.refine_model.parameters(),
                                 "lr": self.lr ,
                             },
-                            # {
-                            #     "params": [self.encoder.init_decoder.G1.refiner_log_std],
-                            #     "lr": self.lr ,
-                            # },
+                            {
+                                "params": [self.encoder.init_decoder.G1.refiner_log_std],
+                                "lr": self.lr ,
+                            },
                         ]
                     )
                 else:
