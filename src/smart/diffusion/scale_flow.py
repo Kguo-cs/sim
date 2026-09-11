@@ -97,7 +97,7 @@ class ScaleFlow(nn.Module):
             self.refiner_log_std = nn.Parameter(
                 torch.full(
                     (args.input_dim,),
-                    math.log( 0.1  ),
+                    math.log( 0.03  ),
                 ),
                 #requires_grad=False
             )

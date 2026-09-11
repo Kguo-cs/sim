@@ -903,13 +903,13 @@ class SMART_GAIL(SMART):
             advantage = tokenized_agent["advantages"][0][non_ego].detach()
 
             # Important: refiner-specific normalization
-            advantage = (
-                                advantage - advantage.mean()
-                        ) / (
-                                advantage.std(unbiased=False) + 1e-6
-                        )
+            # advantage = (
+            #                     advantage - advantage.mean()
+            #             ) / (
+            #                     advantage.std(unbiased=False) + 1e-6
+            #             )
 
-            advantage = advantage.clamp(-2.0, 2.0)
+            #advantage = advantage.clamp(-2.0, 2.0)
 
             pg_loss = -(log_prob * advantage).mean()
 
@@ -918,7 +918,7 @@ class SMART_GAIL(SMART):
 
             # Don't let exploration std explode.
             std_loss = (
-                    log_std - math.log(0.1)
+                    log_std - math.log(0.03)
             ).square().mean()
 
             rl_loss = (
