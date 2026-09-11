@@ -1051,14 +1051,13 @@ class SMART_GAIL(SMART):
                         [
                             {
                                 "params": self.encoder.init_decoder.G1.refine_model.parameters(),
-                                "lr": self.lr * 0.1,
+                                "lr": self.lr ,
                             },
                             {
                                 "params": [self.encoder.init_decoder.G1.refiner_log_std],
-                                "lr": self.lr * 0.01,
+                                "lr": self.lr ,
                             },
-                        ],
-                        weight_decay=1e-4,
+                        ]
                     )
                 else:
                     init_optimizer = torch.optim.AdamW(
