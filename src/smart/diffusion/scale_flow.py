@@ -85,14 +85,25 @@ class ScaleFlow(nn.Module):
                 token_processor,
                 input_dim=args.input_dim,
                 hidden_dim=args.hidden_dim,
-                output_dim=args.input_dim*2,
+                output_dim=args.input_dim,#*2,
                 num_freq_bands=args.num_freq_bands,
                 num_layers=1,
                 num_heads=args.num_heads,
                 head_dim=args.head_dim,
                 dropout=args.dropout,
-                x_pred=False
+                x_pred=True
             )
+
+            # normalized-space exploration std
+            self.refiner_log_std = nn.Parameter(
+                torch.full(
+                    (args.input_dim,),
+                    math.log(0.10),
+                )
+            )
+
+            # refiner mean 最大修正量，normalized space
+            self.refiner_delta_scale = 0.20
 
         self.apply(weight_init)
 
@@ -872,17 +883,49 @@ class ScaleFlow(nn.Module):
             tokenized_agent["gen_z"] = latent
 
             if self.use_refiner:
-                prediction = self.refine_model(
+                base_latent=latent
+                raw_delta_mu = self.refine_model(
                     latent,
                     torch.zeros_like(latent[:,:1]),
                     tokenized_agent,
                     map_feature,
                 )
 
-                prediction_mean=prediction[:,:self.model.input_dim]
-                prediction_std=torch.sigmoid(prediction[:,self.model.input_dim:])*0.01
+                # --------------------------------------
+                # bounded mean in normalized space
+                # --------------------------------------
+                delta_mu = (
+                        self.refiner_delta_scale
+                        * torch.tanh(raw_delta_mu)
+                )
 
-                latent=prediction_mean+prediction_std*torch.randn_like(prediction_mean)
+                # std: initially keep it tightly bounded
+                log_std = self.refiner_log_std.clamp(
+                    min=math.log(0.05),
+                    max=math.log(0.20),
+                )
+
+                std = log_std.exp().expand_as(delta_mu)
+
+                # actual stochastic action
+                eps = torch.randn_like(delta_mu)
+                delta = delta_mu + std * eps
+
+                # --------------------------------------
+                # normalized residual -> raw residual
+                # --------------------------------------
+                scale = self.model.normal_scale.to(
+                    device=latent.device,
+                    dtype=latent.dtype,
+                )
+
+                latent = base_latent + delta * scale
+
+                # tokenized_agent["log_prob"] = dist.log_prob(latent)[~ego_mask].sum(dim=-1)
+                latent[ ego_mask  ] = tokenized_agent["expert_input"  ][ego_mask]
+
+                tokenized_agent["refiner_base"] = base_latent
+                tokenized_agent["refiner_action"] = delta
 
                 tokenized_agent["noise_feat"]=tokenized_agent[ "noise_feat_cur" ][:,None]
                 tokenized_agent["refined_z"] = latent

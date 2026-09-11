@@ -864,28 +864,68 @@ class SMART_GAIL(SMART):
         tokenized_agent["advantages"] =advantages_flat.view_as(advantages_2d[:tokenized_agent["noise_feat"].shape[1]]) #normalized[:tokenized_agent["noise_feat"].shape[1]]
 
         if self.token_processor.use_refiner:
-            latent=tokenized_agent["gen_z"]
-            non_ego = ~tokenized_agent[  "ego_mask" ]
+            non_ego = ~tokenized_agent["ego_mask"].bool()
+
+            base = tokenized_agent["refiner_base"].detach()
+            old_action = tokenized_agent["refiner_action"].detach()
 
             prediction = self.encoder.init_decoder.G1.refine_model(
-                latent,
-                torch.zeros_like(latent[:, :1]),
+                base,
+                torch.zeros_like(base[:, :1]),
                 tokenized_agent,
                 tokenized_agent["initial_map_feature"],
-            )[non_ego]
+            )
 
-            mu = prediction[:, :prediction.shape[-1]//2]
-            std = torch.sigmoid(prediction[:, self.encoder.init_decoder.G1.refine_model.input_dim:]) * 0.01
+            delta_mu = (
+                    self.encoder.init_decoder.G1.refiner_delta_scale
+                    * torch.tanh(prediction)
+            )
 
-            dist = torch.distributions.Normal(mu, std)
+            log_std = (
+                self.encoder.init_decoder.G1.refiner_log_std
+                .clamp(
+                    math.log(0.05),
+                    math.log(0.20),
+                )
+            )
 
-            selected_log_prob = dist.log_prob(tokenized_agent["refined_z"][non_ego]).sum(dim=-1)
-            advantages = tokenized_agent["advantages"][0] # a,t
+            std = log_std.exp().expand_as(delta_mu)
 
-            selected_advantage = advantages[non_ego]
+            dist = torch.distributions.Normal(
+                delta_mu[non_ego],
+                std[non_ego],
+            )
 
-            rl_loss = -(selected_log_prob   * selected_advantage ).mean()
+            log_prob = dist.log_prob(
+                old_action[non_ego]
+            ).sum(dim=-1)
 
+            advantage = tokenized_agent["advantages"][0][non_ego].detach()
+
+            # Important: refiner-specific normalization
+            advantage = (
+                                advantage - advantage.mean()
+                        ) / (
+                                advantage.std(unbiased=False) + 1e-6
+                        )
+
+            advantage = advantage.clamp(-2.0, 2.0)
+
+            pg_loss = -(log_prob * advantage).mean()
+
+            # Keep correction small.
+            residual_loss = delta_mu[non_ego].square().mean()
+
+            # Don't let exploration std explode.
+            std_loss = (
+                    log_std - math.log(0.10)
+            ).square().mean()
+
+            rl_loss = (
+                    pg_loss
+                    + 0.02 * residual_loss
+                    + 0.001 * std_loss
+            )
             self._optimizer_step(optimizer, rl_loss)
 
             return rl_loss
