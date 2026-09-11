@@ -99,9 +99,9 @@ class ScaleFlow(nn.Module):
                 torch.full(
                     (args.input_dim,),
                     math.log(0.10),
-                )
+                ),
+                requires_grad=False
             )
-
             # refiner mean 最大修正量，normalized space
             self.refiner_delta_scale = 0.20
 
