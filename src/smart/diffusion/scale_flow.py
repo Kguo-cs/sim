@@ -880,7 +880,7 @@ class ScaleFlow(nn.Module):
                 )
 
                 prediction_mean=prediction[:,:self.model.input_dim]
-                prediction_std=torch.sigmoid(prediction[:,self.model.input_dim:])*0.1
+                prediction_std=torch.sigmoid(prediction[:,self.model.input_dim:])*0.01
 
                 latent=prediction_mean+prediction_std*torch.randn_like(prediction_mean)
 
