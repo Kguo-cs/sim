@@ -875,7 +875,7 @@ class SMART_GAIL(SMART):
             )[non_ego]
 
             mu = prediction[:, :prediction.shape[-1]//2]
-            std = torch.sigmoid(prediction[:, self.encoder.init_decoder.G1.refine_model.input_dim:]) * 0.01
+            std = torch.sigmoid(prediction[:, self.encoder.init_decoder.G1.refine_model.input_dim:]) * 0.1
 
             dist = torch.distributions.Normal(mu, std)
 
