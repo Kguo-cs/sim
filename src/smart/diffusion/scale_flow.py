@@ -97,9 +97,9 @@ class ScaleFlow(nn.Module):
             self.refiner_log_std = nn.Parameter(
                 torch.full(
                     (args.input_dim,),
-                    math.log(0.10),
+                    math.log( 0.03  ),
                 ),
-                requires_grad=False
+                #requires_grad=False
             )
             # refiner mean 最大修正量，normalized space
             self.refiner_delta_scale = 0.20
@@ -808,69 +808,59 @@ class ScaleFlow(nn.Module):
             noise_level_history = []
             feature_history = []
 
-        # Rollout sampling should not use dropout. This also ensures that
-        # denoisers which expose noise_feat_cur only in eval mode work.
-        model_was_training = self.model.training
-        self.model.eval()
+        for step in range(steps):
+            (
+                latent,
+                _,
+                time,
+                next_time,
+                log_prob,
+                used_noise_level,
+            ) = self._sample_step(
+                latent,
+                timesteps[step],
+                timesteps[step + 1],
+                tokenized_agent,
+                map_feature,
+                branch_mask=(
+                    step_branch_mask[:, step]
+                    if self.use_sde
+                    else None
+                ),
+            )
 
-        try:
-            for step in range(steps):
-                (
-                    latent,
-                    _,
-                    time,
-                    next_time,
-                    log_prob,
-                    used_noise_level,
-                ) = self._sample_step(
-                    latent,
-                    timesteps[step],
-                    timesteps[step + 1],
-                    tokenized_agent,
-                    map_feature,
-                    branch_mask=(
-                        step_branch_mask[:, step]
-                        if self.use_sde
-                        else None
-                    ),
+            if self.use_sde:
+                latent_history.append(
+                    latent.clone()
+                )
+                time_history.append(time)
+                next_time_history.append(
+                    next_time
+                )
+                log_prob_history.append(
+                    log_prob
+                )
+                noise_level_history.append(
+                    used_noise_level
                 )
 
-                if self.use_sde:
-                    latent_history.append(
-                        latent.clone()
-                    )
-                    time_history.append(time)
-                    next_time_history.append(
-                        next_time
-                    )
-                    log_prob_history.append(
-                        log_prob
-                    )
-                    noise_level_history.append(
-                        used_noise_level
-                    )
-
-                    feature_history.append(
-                        tokenized_agent[
-                            "noise_feat_cur"
-                        ].clone()
-                    )
-
-                elif (
-                    step == 0
-                    and "noise_feat_cur"
-                    in tokenized_agent
-                ):
+                feature_history.append(
                     tokenized_agent[
-                        "noise_feat"
-                    ] = tokenized_agent[
                         "noise_feat_cur"
-                    ][:,None]
+                    ].clone()
+                )
 
-        finally:
-            self.model.train(
-                model_was_training
-            )
+            elif (
+                step == 0
+                and "noise_feat_cur"
+                in tokenized_agent
+            ):
+                tokenized_agent[
+                    "noise_feat"
+                ] = tokenized_agent[
+                    "noise_feat_cur"
+                ][:,None]
+
 
         latent[
             ego_mask
