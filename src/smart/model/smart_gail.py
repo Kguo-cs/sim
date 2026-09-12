@@ -919,7 +919,7 @@ class SMART_GAIL(SMART):
 
             # Don't let exploration std explode.
             std_loss = (
-                    log_std - math.log(0.5)
+                    log_std - math.log(0.03)
             ).square().mean()
 
             rl_loss = (
@@ -1052,7 +1052,7 @@ class SMART_GAIL(SMART):
                         [
                             {
                                 "params": self.encoder.init_decoder.G1.refine_model.parameters(),
-                                "lr": self.lr *5,
+                                "lr": self.lr ,#*5,
                             },
                             # {
                             #     "params": [self.encoder.init_decoder.G1.refiner_log_std],
