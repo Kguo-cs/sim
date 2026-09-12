@@ -932,7 +932,7 @@ class SMART_GAIL(SMART):
 
 
         match_loss, col_loss, pos_loss, heading_loss, shape_loss, vel_loss = self.encoder.init_decoder(tokenized_agent)
-        rl_loss = tokenized_agent["rl_loss"]*0.01
+        rl_loss = tokenized_agent["rl_loss"]*0.1
         reference = match_loss
         metrics = {
             "match_loss": match_loss,
