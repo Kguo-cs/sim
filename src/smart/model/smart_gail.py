@@ -881,13 +881,14 @@ class SMART_GAIL(SMART):
                     * torch.tanh(prediction)
             )
 
-            log_std = (
-                self.encoder.init_decoder.G1.refiner_log_std
-                .clamp(
-                    math.log(0.05),
-                    math.log(0.20),
-                )
-            )
+            # log_std = (
+            #     self.encoder.init_decoder.G1.refiner_log_std
+            #     .clamp(
+            #         math.log(0.05),
+            #         math.log(0.20),
+            #     )
+            # )
+            log_std=self.encoder.init_decoder.G1.refiner_log_std
 
             std = log_std.exp().expand_as(delta_mu)
 

@@ -889,18 +889,20 @@ class ScaleFlow(nn.Module):
                 )
 
                 # std: initially keep it tightly bounded
-                log_std = self.refiner_log_std.clamp(
-                    min=math.log(0.05),
-                    max=math.log(0.20),
-                )
+                # log_std = self.refiner_log_std.clamp(
+                #     min=math.log(0.05),
+                #     max=math.log(0.20),
+                # )
+                log_std=self.refiner_log_std
 
                 std = log_std.exp().expand_as(delta_mu)
 
                 # actual stochastic action
-                #if "gt_z_raw" not in tokenized_agent:
-                eps = torch.randn_like(delta_mu)
-                # else:
-                #     eps=torch.zeros_like(delta_mu)
+                if "gt_z_raw" not in tokenized_agent:
+                    eps = torch.randn_like(delta_mu)
+                else:
+                    eps=torch.zeros_like(delta_mu)
+
                 delta = delta_mu + std * eps
 
                 # --------------------------------------
