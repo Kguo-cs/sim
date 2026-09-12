@@ -923,7 +923,7 @@ class SMART_GAIL(SMART):
 
             rl_loss = (
                     pg_loss
-                   # + 0.02 * residual_loss
+                    + 0.02 * residual_loss
                     + 0.001 * std_loss
             )
             self._optimizer_step(optimizer, rl_loss)

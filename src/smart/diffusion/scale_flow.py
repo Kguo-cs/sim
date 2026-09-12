@@ -897,10 +897,10 @@ class ScaleFlow(nn.Module):
                 std = log_std.exp().expand_as(delta_mu)
 
                 # actual stochastic action
-                if "gt_z_raw" not in tokenized_agent:
-                    eps = torch.randn_like(delta_mu)
-                else:
-                    eps=torch.zeros_like(delta_mu)
+                #if "gt_z_raw" not in tokenized_agent:
+                eps = torch.randn_like(delta_mu)
+                # else:
+                #     eps=torch.zeros_like(delta_mu)
                 delta = delta_mu + std * eps
 
                 # --------------------------------------
