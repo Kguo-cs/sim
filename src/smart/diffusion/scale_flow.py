@@ -84,7 +84,7 @@ class ScaleFlow(nn.Module):
                 token_processor,
                 input_dim=args.input_dim,
                 hidden_dim=args.hidden_dim,
-                output_dim=args.input_dim,#*2,
+                output_dim=args.input_dim*2,#,
                 num_freq_bands=args.num_freq_bands,
                 num_layers=1,
                 num_heads=args.num_heads,
@@ -873,7 +873,7 @@ class ScaleFlow(nn.Module):
 
             if self.use_refiner:
                 base_latent=latent
-                raw_delta_mu = self.refine_model(
+                prediction = self.refine_model(
                     latent,
                     torch.zeros_like(latent[:,:1]),
                     tokenized_agent,
@@ -885,7 +885,7 @@ class ScaleFlow(nn.Module):
                 # --------------------------------------
                 delta_mu = (
                         self.refiner_delta_scale
-                        * torch.tanh(raw_delta_mu)
+                        * torch.tanh(prediction[:,:base_latent.shape[-1]])
                 )
 
                 # std: initially keep it tightly bounded
@@ -893,7 +893,7 @@ class ScaleFlow(nn.Module):
                 #     min=math.log(0.05),
                 #     max=math.log(0.20),
                 # )
-                log_std=self.refiner_log_std
+                log_std=prediction[:,base_latent.shape[-1]:]#self.refiner_log_std
 
                 std = log_std.exp().expand_as(delta_mu)
 

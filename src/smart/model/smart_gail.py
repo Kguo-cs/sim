@@ -878,7 +878,7 @@ class SMART_GAIL(SMART):
 
             delta_mu = (
                     self.encoder.init_decoder.G1.refiner_delta_scale
-                    * torch.tanh(prediction)
+                    * torch.tanh(prediction[:,:base.shape[-1]])
             )
 
             # log_std = (
@@ -888,7 +888,7 @@ class SMART_GAIL(SMART):
             #         math.log(0.20),
             #     )
             # )
-            log_std=self.encoder.init_decoder.G1.refiner_log_std
+            log_std=prediction[:,base.shape[-1]:]#self.encoder.init_decoder.G1.refiner_log_std
 
             std = log_std.exp().expand_as(delta_mu)
 
