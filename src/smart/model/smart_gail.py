@@ -919,7 +919,7 @@ class SMART_GAIL(SMART):
 
             # Don't let exploration std explode.
             std_loss = (
-                    log_std - math.log(0.03)
+                    log_std - math.log(0.1)
             ).square().mean()
 
             rl_loss = (
