@@ -908,9 +908,7 @@ class ScaleFlow(nn.Module):
                 # --------------------------------------
                 # normalized residual -> raw residual
                 # --------------------------------------
-                scale = self.model.normal_scale
-
-                res =  delta * scale#base +
+                res =  delta * self.model.normal_scale#base +
 
                 res[:, 4:] = base[:, 4:] + res[:, 4:]
 
