@@ -102,7 +102,7 @@ class ScaleFlow(nn.Module):
                 #requires_grad=False
             )
             # refiner mean 最大修正量，normalized space
-            self.refiner_delta_scale = 0.20
+            self.refiner_delta_scale = 0.5
 
         self.apply(weight_init)
 
