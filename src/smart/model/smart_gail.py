@@ -933,7 +933,7 @@ class SMART_GAIL(SMART):
                     pg_loss
                     + 0.02 * residual_loss
                     + 0.1 * std_loss
-                    +collision_loss
+                    +0.1*collision_loss
             )
             self._optimizer_step(optimizer, rl_loss)
             self._log_train(f"train/pg_loss", _safe_mean(pg_loss, rl_loss))
