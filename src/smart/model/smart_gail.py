@@ -936,10 +936,11 @@ class SMART_GAIL(SMART):
                     +collision_loss
             )
             self._optimizer_step(optimizer, rl_loss)
-            self._log_train(f"train/{pg_loss}", _safe_mean(pg_loss, rl_loss))
-            self._log_train(f"train/{residual_loss}", _safe_mean(residual_loss, rl_loss))
-            self._log_train(f"train/{std_loss}", _safe_mean(std_loss, rl_loss))
-            self._log_train(f"train/{collision_loss}", _safe_mean(std_loss, collision_loss))
+            self._log_train(f"train/pg_loss", _safe_mean(pg_loss, rl_loss))
+            self._log_train(f"train/residual_loss", _safe_mean(residual_loss, rl_loss))
+            self._log_train(f"train/std_loss", _safe_mean(std_loss, rl_loss))
+            self._log_train(f"train/collision_loss", _safe_mean(collision_loss, rl_loss))
+            self._log_train(f"train/rl_loss", _safe_mean(rl_loss, rl_loss))
 
             return rl_loss
 
