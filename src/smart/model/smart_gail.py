@@ -866,8 +866,8 @@ class SMART_GAIL(SMART):
         if self.token_processor.use_refiner:
             non_ego = ~tokenized_agent["ego_mask"].bool()
 
-            base = tokenized_agent["refiner_base"].detach()
-            old_action = tokenized_agent["refiner_action"].detach()
+            base = tokenized_agent["refiner_base"]
+            old_action = tokenized_agent["refiner_action"]
 
             prediction = self.encoder.init_decoder.G1.refine_model(
                 base,
@@ -880,6 +880,9 @@ class SMART_GAIL(SMART):
                     self.encoder.init_decoder.G1.refiner_delta_scale
                     * torch.tanh(prediction[:,:base.shape[-1]])
             )
+            log_std=prediction[:,base.shape[-1]:]
+
+            std = log_std.exp().expand_as(delta_mu)
 
             # log_std = (
             #     self.encoder.init_decoder.G1.refiner_log_std
@@ -888,10 +891,6 @@ class SMART_GAIL(SMART):
             #         math.log(0.20),
             #     )
             # )
-            log_std=prediction[:,base.shape[-1]:]#self.encoder.init_decoder.G1.refiner_log_std
-
-            std = log_std.exp().expand_as(delta_mu)
-
             dist = torch.distributions.Normal(
                 delta_mu[non_ego],
                 std[non_ego],
@@ -903,21 +902,16 @@ class SMART_GAIL(SMART):
 
             advantage = tokenized_agent["advantages"][0][non_ego].detach()
 
-            # Important: refiner-specific normalization
-            # advantage = (
-            #                     advantage - advantage.mean()
-            #             ) / (
-            #                     advantage.std(unbiased=False) + 1e-6
-            #             )
-
-            #advantage = advantage.clamp(-2.0, 2.0)
-
             pg_loss = -(log_prob * advantage).mean()
 
             # Keep correction small.
             residual_loss = delta_mu[non_ego].square().mean()
 
-            refine_mean = base + delta_mu * self.encoder.init_decoder.G1.model.normal_scale
+            res=delta_mu * self.encoder.init_decoder.G1.model.normal_scale
+
+            res[:,4:]=base[:,4:] +res[:,4:]
+
+            refine_mean =self.encoder.init_decoder.G1.model.output_transform(res, base[:, :2], torch.atan2(base[:, 3], base[:, 2]))
 
             edge_loss, end_idx, start_idx = multi_circle_collision_loss_mem_efficient(
                 refine_mean, tokenized_agent["batch"]
@@ -933,7 +927,7 @@ class SMART_GAIL(SMART):
                     pg_loss
                     + 0.02 * residual_loss
                     + 0.1 * std_loss
-                    +0.1*collision_loss
+                    + 0.1* collision_loss
             )
             self._optimizer_step(optimizer, rl_loss)
             self._log_train(f"train/pg_loss", _safe_mean(pg_loss, rl_loss))

@@ -872,7 +872,7 @@ class ScaleFlow(nn.Module):
             tokenized_agent["gen_z"] = latent
 
             if self.use_refiner:
-                base_latent=latent
+                base=latent
                 prediction = self.refine_model(
                     latent,
                     torch.zeros_like(latent[:,:1]),
@@ -885,7 +885,7 @@ class ScaleFlow(nn.Module):
                 # --------------------------------------
                 delta_mu = (
                         self.refiner_delta_scale
-                        * torch.tanh(prediction[:,:base_latent.shape[-1]])
+                        * torch.tanh(prediction[:,:base.shape[-1]])
                 )
 
                 # std: initially keep it tightly bounded
@@ -893,7 +893,7 @@ class ScaleFlow(nn.Module):
                 #     min=math.log(0.05),
                 #     max=math.log(0.20),
                 # )
-                log_std=prediction[:,base_latent.shape[-1]:]#self.refiner_log_std
+                log_std=prediction[:,base.shape[-1]:]#self.refiner_log_std
 
                 std = log_std.exp().expand_as(delta_mu)
 
@@ -910,12 +910,16 @@ class ScaleFlow(nn.Module):
                 # --------------------------------------
                 scale = self.model.normal_scale
 
-                latent = base_latent + delta * scale
+                res =  delta * scale#base +
+
+                res[:, 4:] = base[:, 4:] + res[:, 4:]
+
+                latent = self.model.output_transform(res, base[:, :2],torch.atan2(base[:, 3], base[:, 2]))
 
                 # tokenized_agent["log_prob"] = dist.log_prob(latent)[~ego_mask].sum(dim=-1)
-                latent[ ego_mask  ] = tokenized_agent["expert_input"  ][ego_mask]
+                latent[ego_mask] = tokenized_agent["expert_input"  ][ego_mask]
 
-                tokenized_agent["refiner_base"] = base_latent
+                tokenized_agent["refiner_base"] = base
                 tokenized_agent["refiner_action"] = delta
 
                 tokenized_agent["noise_feat"]=tokenized_agent[ "noise_feat_cur" ][:,None]

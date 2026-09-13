@@ -109,11 +109,8 @@ class InitDenoiser(nn.Module):
             # noise embedding + type embedding directly.
             self.type_a_emb = nn.Embedding(self.num_classes + 1, hidden_dim)
             self.noise_embedding = MLPLayer(self.m_delta_dim, hidden_dim, hidden_dim)
+            self.proj_in_m_delta = nn.Linear(self.m_delta_dim - 4, hidden_dim)
 
-            if self.x_pred:
-                self.proj_in_m_delta = nn.Linear(self.m_delta_dim - 4, hidden_dim)
-            else:
-                self.proj_in_m_delta = nn.Linear(self.m_delta_dim , hidden_dim)
 
 
         # Ego-context embedding. The input is:
@@ -335,11 +332,8 @@ class InitDenoiser(nn.Module):
         the projected continuous state ``m_delta[:, 4:]``.
         """
         beta = self._format_beta(1-beta, m_delta.shape[0])
+        feat_a = self.proj_in_m_delta(m_delta[:, 4:])
 
-        if self.x_pred:
-            feat_a = self.proj_in_m_delta(m_delta[:, 4:])
-        else:
-            feat_a = self.proj_in_m_delta(m_delta)
         feat_a = feat_a + self.noise_embedding(beta)
         feat_a = feat_a + agent_type_embed
         return feat_a
@@ -516,6 +510,27 @@ class InitDenoiser(nn.Module):
 
         return self.to_out_m_delta(feat_a)
 
+    def output_transform(self,res,cur_pos,cur_theta):
+        res_theta = torch.atan2(res[:, 3], res[:, 2])
+
+        local_pos, local_theta = transform_to_global(
+            res[:, :2],
+            res_theta,
+            cur_pos,
+            cur_theta,
+        )
+
+        res = torch.cat(
+            [
+                local_pos,
+                torch.cos(local_theta)[:, None],
+                torch.sin(local_theta)[:, None],
+                res[:, 4:],
+            ],
+            dim=-1,
+        )
+        return res
+
     def forward(
         self,
         m_delta: torch.Tensor,
@@ -567,30 +582,7 @@ class InitDenoiser(nn.Module):
         )
 
         if self.x_pred :
-            res_theta = torch.atan2(res[:, 3], res[:, 2])
-
-            local_pos, local_theta = transform_to_global(
-                res[:, :2],
-                res_theta,
-                pos_s,
-                theta,
-            )
-
-            # local_v = rotate_to_local(
-            #     res[:,6:],
-            #     res_theta,
-            # )
-
-            res = torch.cat(
-                [
-                    local_pos,
-                    torch.cos(local_theta)[:, None],
-                    torch.sin(local_theta)[:, None],
-                    res[:, 4:],
-                   # local_v
-                ],
-                dim=-1,
-            )
+            res =self.output_transform(res, pos_s, theta)
 
         ego_mask = tokenized_agent.get("ego_mask", None)
         if not self.training and len(beta)==len(ego_mask): #and torch.all(beta[~ego_mask] == 0):
