@@ -94,13 +94,13 @@ class ScaleFlow(nn.Module):
             )
 
             # normalized-space exploration std
-            self.refiner_log_std = nn.Parameter(
-                torch.full(
-                    (args.input_dim,),
-                    math.log( 0.1  ),
-                ),
-                #requires_grad=False
-            )
+            # self.refiner_log_std = nn.Parameter(
+            #     torch.full(
+            #         (args.input_dim,),
+            #         math.log( 0.1  ),
+            #     ),
+            #     #requires_grad=False
+            # )
             # refiner mean 最大修正量，normalized space
             self.refiner_delta_scale = 0.2
 
@@ -908,10 +908,7 @@ class ScaleFlow(nn.Module):
                 # --------------------------------------
                 # normalized residual -> raw residual
                 # --------------------------------------
-                scale = self.model.normal_scale.to(
-                    device=latent.device,
-                    dtype=latent.dtype,
-                )
+                scale = self.model.normal_scale
 
                 latent = base_latent + delta * scale
 

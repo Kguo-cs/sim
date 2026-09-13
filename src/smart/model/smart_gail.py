@@ -30,7 +30,7 @@ from src.smart.loss.rollout_buffer import (
 import math
 from src.smart.model.smart import SMART
 from torch.optim.lr_scheduler import LambdaLR
-
+from src.smart.diffusion.diffusion_utils import multi_circle_collision_loss_mem_efficient
 TensorDict = MutableMapping[str, Any]
 
 
@@ -917,6 +917,13 @@ class SMART_GAIL(SMART):
             # Keep correction small.
             residual_loss = delta_mu[non_ego].square().mean()
 
+            refine_mean = base + delta_mu * self.encoder.init_decoder.G1.model.normal_scale
+
+            edge_loss, end_idx, start_idx = multi_circle_collision_loss_mem_efficient(
+                refine_mean, tokenized_agent["batch"]
+            )
+            collision_loss = edge_loss.mean()
+
             # Don't let exploration std explode.
             std_loss = (
                     log_std - math.log(0.1)
@@ -924,10 +931,15 @@ class SMART_GAIL(SMART):
 
             rl_loss = (
                     pg_loss
-                    + 0.1 * residual_loss
+                    + 0.02 * residual_loss
                     + 0.1 * std_loss
+                    +collision_loss
             )
             self._optimizer_step(optimizer, rl_loss)
+            self._log_train(f"train/{pg_loss}", _safe_mean(pg_loss, rl_loss))
+            self._log_train(f"train/{residual_loss}", _safe_mean(residual_loss, rl_loss))
+            self._log_train(f"train/{std_loss}", _safe_mean(std_loss, rl_loss))
+            self._log_train(f"train/{collision_loss}", _safe_mean(std_loss, collision_loss))
 
             return rl_loss
 
