@@ -919,13 +919,13 @@ class SMART_GAIL(SMART):
 
             # Don't let exploration std explode.
             std_loss = (
-                    log_std - math.log(0.5)
+                    log_std - math.log(0.1)
             ).square().mean()
 
             rl_loss = (
                     pg_loss
                     + 0.02 * residual_loss
-                    + 0.1 * std_loss
+                    + 0.01 * std_loss
             )
             self._optimizer_step(optimizer, rl_loss)
 
